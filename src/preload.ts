@@ -20,4 +20,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('save-recording-error', subscription);
   },
   openVideoFileDialog: () => ipcRenderer.send('open-video-file-dialog'),
+  getVideosInFolder: (folderPath: string) => ipcRenderer.invoke('get-videos-in-folder', folderPath),
+  getStoredSaveFolderPath: () => ipcRenderer.invoke('get-stored-save-folder-path'),
 });

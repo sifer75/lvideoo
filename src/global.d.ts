@@ -8,6 +8,8 @@ declare global {
       onSaveRecordingSuccess: (func: (filePath: string) => void) => () => void;
       onSaveRecordingError: (func: (errorMessage: string) => void) => () => void;
       openVideoFileDialog: () => void;
+      getVideosInFolder: (folderPath: string) => Promise<string[]>;
+      getStoredSaveFolderPath: () => Promise<string>;
     };
   }
 

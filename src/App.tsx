@@ -19,6 +19,20 @@ function App() {
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
 
+  const refreshVideoList = async () => {
+    const storedPath = await window.electronAPI.getStoredSaveFolderPath();
+    if (storedPath) {
+      const videoPaths = await window.electronAPI.getVideosInFolder(storedPath);
+      const newVideos = videoPaths.map(path => ({
+        id: path,
+        title: path.split(/[\\/]/).pop() || 'Vidéo',
+        path: path,
+        shareLink: '',
+      }));
+      setVideos(newVideos);
+    }
+  };
+
   useEffect(() => {
     // Écoute la réponse du processus principal après la sélection d'un fichier vidéo
     const cleanupVideoFile = window.electronAPI.receive('selected-video-file', (filePath: string) => {
@@ -31,11 +45,14 @@ function App() {
     // Écoute les messages de succès/erreur de sauvegarde depuis la modale
     const cleanupSaveSuccess = window.electronAPI.onSaveRecordingSuccess((filePath: string) => {
       alert(`Enregistrement sauvegardé avec succès: ${filePath}`);
-      setVideos(prevVideos => [...prevVideos, { id: Date.now().toString(), title: `Vidéo ${prevVideos.length + 1}`, path: filePath, shareLink: '' }]);
+      refreshVideoList(); // Rafraîchir la liste après la sauvegarde
     });
     const cleanupSaveError = window.electronAPI.onSaveRecordingError((errorMessage: string) => {
       alert(`Erreur lors de la sauvegarde de l'enregistrement: ${errorMessage}`);
     });
+
+    // Au montage, demander la liste initiale des vidéos
+    refreshVideoList();
 
     return () => {
       cleanupVideoFile();

@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog, desktopCapturer } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
+import Store from 'electron-store';
 
 import started from 'electron-squirrel-startup';
 
@@ -8,6 +9,8 @@ import started from 'electron-squirrel-startup';
 if (started) {
   app.quit();
 }
+
+const store = new Store();
 
 const createWindow = () => {
   // Create the browser window.
@@ -36,7 +39,9 @@ const createWindow = () => {
     });
 
     if (!canceled && filePaths.length > 0) {
-      event.sender.send('selected-folder', filePaths[0]);
+      const selectedPath = filePaths[0];
+      store.set('saveFolderPath', selectedPath); // Save to store
+      event.sender.send('selected-folder', selectedPath);
     } else {
       event.sender.send('selected-folder', ''); // Send empty string if canceled
     }
@@ -92,6 +97,28 @@ const createWindow = () => {
     } else {
       event.sender.send('selected-video-file', '');
     }
+  });
+
+  // Handle getting videos in folder
+  ipcMain.handle('get-videos-in-folder', async (event, folderPath: string | undefined) => {
+    const targetPath = folderPath || store.get('saveFolderPath', app.getPath('videos')) as string; // Use stored path or default
+    try {
+      const files = await fs.promises.readdir(targetPath);
+      const videoExtensions = ['mp4', 'webm', 'mkv', 'avi', 'mov'];
+      const videoFiles = files.filter(file => {
+        const ext = path.extname(file).toLowerCase().substring(1);
+        return videoExtensions.includes(ext);
+      }).map(file => path.join(targetPath, file));
+      return videoFiles;
+    } catch (error) {
+      console.error('Error reading video folder:', error);
+      return [];
+    }
+  });
+
+  // Handle getting stored save folder path
+  ipcMain.handle('get-stored-save-folder-path', () => {
+    return store.get('saveFolderPath', '');
   });
 };
 
