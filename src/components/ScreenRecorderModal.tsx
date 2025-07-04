@@ -132,8 +132,8 @@ function ScreenRecorderModal({ onClose, isCameraOn, cameraStream, handleToggleCa
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-end z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-1/2 h-full relative">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-end z-50" onClick={onClose}>
+      <div className="bg-white p-6 rounded-lg shadow-lg w-1/2 h-full relative" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 text-2xl">&times;</button>
         <h2 className="text-2xl font-bold mb-4 text-gray-800">Enregistreur d'écran</h2>
         <div className="space-y-2 text-gray-700">
@@ -152,7 +152,8 @@ function ScreenRecorderModal({ onClose, isCameraOn, cameraStream, handleToggleCa
                 <option key={source.id} value={source.id}>
                   {source.name}
                 </option>
-              ))}
+              ))
+              }
             </select>
           </div>
         </div>

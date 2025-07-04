@@ -35,6 +35,7 @@ declare global {
   interface VideoLibraryProps {
     videos: VideoItem[];
     onOpenRecorder: () => void;
+    onSelectVideo: (video: VideoItem) => void;
   }
 }
 

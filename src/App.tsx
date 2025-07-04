@@ -13,6 +13,7 @@ function App() {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [showScreenRecorderModal, setShowScreenRecorderModal] = useState<boolean>(false);
   const [activeView, setActiveView] = useState<'recorder' | 'library'>('library'); // 'recorder' ou 'library'
+  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null); // Nouvelle état pour la vidéo sélectionnée
 
   const [isCameraOn, setIsCameraOn] = useState<boolean>(false);
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -74,6 +75,17 @@ function App() {
     }
   };
 
+  const handleSelectVideo = (video: VideoItem) => {
+    setSelectedVideo(video);
+  };
+
+  const handleCloseRecorderModal = () => {
+    setShowScreenRecorderModal(false);
+    if (isCameraOn) {
+      handleToggleCamera(); // Arrête la caméra si elle est active
+    }
+  };
+
   return (
     <div className="flex h-screen">
       {/* Menu latéral gauche */}
@@ -93,6 +105,7 @@ function App() {
           <VideoLibrary
             videos={videos}
             onOpenRecorder={() => setShowScreenRecorderModal(true)}
+            onSelectVideo={handleSelectVideo}
           />
         )}
         
@@ -104,11 +117,18 @@ function App() {
             muted
           ></video>
         )}
+
+        {selectedVideo && (
+          <div className="mt-4">
+            <h2 className="text-xl font-bold mb-2">{selectedVideo.title}</h2>
+            <video controls src={selectedVideo.path} className="w-full h-auto"></video>
+          </div>
+        )}
       </div>
 
       {showScreenRecorderModal && (
         <ScreenRecorderModal
-          onClose={() => setShowScreenRecorderModal(false)}
+          onClose={handleCloseRecorderModal}
           isCameraOn={isCameraOn}
           cameraStream={cameraStreamRef.current}
           handleToggleCamera={handleToggleCamera}
