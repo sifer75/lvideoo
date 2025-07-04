@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, desktopCapturer } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 
@@ -26,6 +26,33 @@ const createWindow = () => {
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
+
+  // Handle folder selection dialog
+  ipcMain.on('open-folder-dialog', async (event) => {
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory'],
+    });
+
+    if (!canceled && filePaths.length > 0) {
+      event.sender.send('selected-folder', filePaths[0]);
+    } else {
+      event.sender.send('selected-folder', ''); // Send empty string if canceled
+    }
+  });
+
+  // Handle getting screen sources
+  ipcMain.handle('get-screen-sources', async () => {
+    const sources = await desktopCapturer.getSources({
+      types: ['window', 'screen'],
+      thumbnailSize: { width: 150, height: 150 },
+    });
+    return sources.map(source => ({
+      id: source.id,
+      name: source.name,
+      thumbnail: source.thumbnail.toDataURL(),
+      display_id: source.display_id,
+    }));
+  });
 };
 
 // This method will be called when Electron has finished
