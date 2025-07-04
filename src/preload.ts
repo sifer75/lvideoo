@@ -19,4 +19,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('save-recording-error', subscription);
     return () => ipcRenderer.removeListener('save-recording-error', subscription);
   },
+  openVideoFileDialog: () => ipcRenderer.send('open-video-file-dialog'),
 });

@@ -1,5 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog, desktopCapturer } from 'electron';
 import path from 'node:path';
+import fs from 'node:fs';
+
 import started from 'electron-squirrel-startup';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -52,6 +54,44 @@ const createWindow = () => {
       thumbnail: source.thumbnail.toDataURL(),
       display_id: source.display_id,
     }));
+  });
+
+  // Handle saving recording
+  ipcMain.on('save-recording', async (event, { blob, folderPath }) => {
+    try {
+      const buffer = Buffer.from(blob);
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const fileName = `recording_${timestamp}.webm`;
+      const filePath = path.join(folderPath, fileName);
+
+      fs.writeFile(filePath, buffer, (err) => {
+        if (err) {
+          console.error('Failed to save recording:', err);
+          event.sender.send('save-recording-error', err.message); // Send error to renderer
+        } else {
+          event.sender.send('save-recording-success', filePath); // Send success to renderer
+        }
+      });
+    } catch (error) {
+      console.error('Error processing recording data:', error);
+      event.sender.send('save-recording-error', error.message); // Send error to renderer
+    }
+  });
+
+  // Handle opening video file dialog
+  ipcMain.on('open-video-file-dialog', async (event) => {
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openFile'],
+      filters: [
+        { name: 'Videos', extensions: ['mp4', 'webm', 'mkv', 'avi', 'mov'] },
+      ],
+    });
+
+    if (!canceled && filePaths.length > 0) {
+      event.sender.send('selected-video-file', filePaths[0]);
+    } else {
+      event.sender.send('selected-video-file', '');
+    }
   });
 };
 

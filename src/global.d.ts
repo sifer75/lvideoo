@@ -7,7 +7,34 @@ declare global {
       saveRecording: (data: { blob: ArrayBuffer, folderPath: string }) => void;
       onSaveRecordingSuccess: (func: (filePath: string) => void) => () => void;
       onSaveRecordingError: (func: (errorMessage: string) => void) => () => void;
+      openVideoFileDialog: () => void;
     };
+  }
+
+  interface VideoItem {
+    id: string;
+    title: string;
+    path: string;
+    shareLink: string;
+  }
+
+  interface ScreenSource {
+    id: string;
+    name: string;
+    thumbnail: string;
+    display_id: string;
+  }
+
+  interface ScreenRecorderModalProps {
+    onClose: () => void;
+    isCameraOn: boolean;
+    cameraStream: MediaStream | null;
+    handleToggleCamera: () => Promise<void>;
+  }
+
+  interface VideoLibraryProps {
+    videos: VideoItem[];
+    onOpenRecorder: () => void;
   }
 }
 
