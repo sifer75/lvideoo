@@ -9,38 +9,49 @@ interface VideoItem {
 
 interface VideoLibraryProps {
   videos: VideoItem[];
-  onOpenRecorder: () => void;
-  onSelectVideo: (video: VideoItem) => void; // Nouvelle prop
+  onSelectVideo: (video: VideoItem) => void;
+  onShareVideo: (video: VideoItem) => void;
+  onDeleteVideo: (video: VideoItem) => void;
 }
 
-function VideoLibrary({ videos, onOpenRecorder, onSelectVideo }: VideoLibraryProps) {
+function VideoLibrary({ videos, onSelectVideo, onShareVideo, onDeleteVideo }: VideoLibraryProps) {
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Ma Librairie</h1>
-      <button
-        onClick={onOpenRecorder}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
-      >
-        Ouvrir Enregistreur
-      </button>
-      <div className="flex-grow overflow-y-auto">
-        {videos.length === 0 ? (
-          <p className="text-gray-400">Aucune vidéo enregistrée.</p>
-        ) : (
-          <ul className="space-y-2">
-            {videos.map((video) => (
-              <li
-                key={video.id}
-                className="bg-gray-700 p-2 rounded flex justify-between items-center cursor-pointer hover:bg-gray-600"
-                onClick={() => onSelectVideo(video)} // Rendre l'élément cliquable
-              >
-                <span>{video.title}</span>
-                <button className="bg-blue-500 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded">Partager</button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+    <div className="flex-grow overflow-y-auto">
+      {videos.length === 0 ? (
+        <p className="text-gray-400">Aucune vidéo enregistrée.</p>
+      ) : (
+        <ul className="space-y-2">
+          {videos.map((video) => (
+            <li
+              key={video.id}
+              className="bg-gray-700 p-2 rounded flex justify-between items-center cursor-pointer hover:bg-gray-600"
+              onClick={() => onSelectVideo(video)}
+            >
+              <span>{video.title}</span>
+              <div className="space-x-2">
+                <button
+                  className="bg-blue-500 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShareVideo(video);
+                  }}
+                >
+                  Partager
+                </button>
+                <button
+                  className="bg-red-500 hover:bg-red-700 text-white text-xs py-1 px-2 rounded"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteVideo(video);
+                  }}
+                >
+                  Supprimer
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

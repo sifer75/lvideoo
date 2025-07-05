@@ -10,6 +10,11 @@ declare global {
       openVideoFileDialog: () => void;
       getVideosInFolder: (folderPath: string) => Promise<string[]>;
       getStoredSaveFolderPath: () => Promise<string>;
+      copyToClipboard: (text: string) => void;
+      onMainLog: (func: (message: string) => void) => () => void;
+      deleteVideo: (filePath: string) => void;
+      onDeleteVideoSuccess: (func: (filePath: string) => void) => () => void;
+      onDeleteVideoError: (func: (errorMessage: string) => void) => () => void;
     };
   }
 
@@ -38,6 +43,8 @@ declare global {
     videos: VideoItem[];
     onOpenRecorder: () => void;
     onSelectVideo: (video: VideoItem) => void;
+    onShareVideo: (video: VideoItem) => void;
+    onDeleteVideo: (video: VideoItem) => void;
   }
 }
 

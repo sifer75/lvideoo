@@ -12,8 +12,7 @@ interface VideoItem {
 function App() {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [showScreenRecorderModal, setShowScreenRecorderModal] = useState<boolean>(false);
-  const [activeView, setActiveView] = useState<'recorder' | 'library'>('library'); // 'recorder' ou 'library'
-  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null); // Nouvelle état pour la vidéo sélectionnée
+  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
 
   const [isCameraOn, setIsCameraOn] = useState<boolean>(false);
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -51,6 +50,16 @@ function App() {
       alert(`Erreur lors de la sauvegarde de l'enregistrement: ${errorMessage}`);
     });
 
+    // Écoute les messages de succès/erreur de suppression
+    const cleanupDeleteSuccess = window.electronAPI.onDeleteVideoSuccess((filePath: string) => {
+      alert(`Vidéo supprimée avec succès: ${filePath}`);
+      refreshVideoList(); // Rafraîchir la liste après la suppression
+      setSelectedVideo(null); // Désélectionner la vidéo si elle est supprimée
+    });
+    const cleanupDeleteError = window.electronAPI.onDeleteVideoError((errorMessage: string) => {
+      alert(`Erreur lors de la suppression de la vidéo: ${errorMessage}`);
+    });
+
     // Au montage, demander la liste initiale des vidéos
     refreshVideoList();
 
@@ -58,6 +67,8 @@ function App() {
       cleanupVideoFile();
       cleanupSaveSuccess();
       cleanupSaveError();
+      cleanupDeleteSuccess();
+      cleanupDeleteError();
     };
   }, []);
 
@@ -103,29 +114,55 @@ function App() {
     }
   };
 
+  const handleShareVideo = (video: VideoItem) => {
+    window.electronAPI.copyToClipboard(video.path);
+    // alert(`Chemin de la vidéo copié dans le presse-papiers: ${video.path}`); // Supprimé
+  };
+
+  const handleDeleteVideo = (video: VideoItem) => {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer "${video.title}" ?`)) {
+      window.electronAPI.deleteVideo(video.path);
+    }
+  };
+
+  const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    console.error('Erreur de chargement vidéo:', e.currentTarget.error);
+    alert(`Erreur lors du chargement de la vidéo: ${e.currentTarget.error?.message || 'Erreur inconnue'}`);
+  };
+
   return (
     <div className="flex h-screen">
-      {/* Menu latéral gauche */}
-      <div className="w-64 bg-gray-800 text-white flex flex-col p-4">
-        <h2 className="text-xl font-bold mb-4">Menu</h2>
-        <button
-          onClick={() => setActiveView('library')}
-          className={`py-2 px-4 rounded mb-2 ${activeView === 'library' ? 'bg-blue-700' : 'bg-gray-700'} hover:bg-blue-600`}
-        >
-          Ma Librairie
-        </button>
+      {/* Sidebar */}
+      <div className="w-1/4 bg-gray-800 text-white flex flex-col p-4">
+        <h2 className="text-xl font-bold mb-4">Ma Librairie</h2>
+        <VideoLibrary
+          videos={videos}
+          onSelectVideo={handleSelectVideo}
+          onShareVideo={handleShareVideo}
+          onDeleteVideo={handleDeleteVideo}
+        />
       </div>
 
-      {/* Contenu principal */}
+      {/* Main Content */}
       <div className="flex-grow p-4 relative">
-        {activeView === 'library' && (
-          <VideoLibrary
-            videos={videos}
-            onOpenRecorder={() => setShowScreenRecorderModal(true)}
-            onSelectVideo={handleSelectVideo}
-          />
+        <button
+          onClick={() => setShowScreenRecorderModal(true)}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
+        >
+          Ouvrir Enregistreur
+        </button>
+
+        {selectedVideo ? (
+          <div className="mt-4">
+            <h2 className="text-xl font-bold mb-2">{selectedVideo.title}</h2>
+            <video controls src={selectedVideo.path} className="w-full h-auto" onError={handleVideoError}></video>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-500">Sélectionnez une vidéo pour la lire.</p>
+          </div>
         )}
-        
+
         {isCameraOn && (
           <video
             ref={cameraVideoRef}
@@ -133,13 +170,6 @@ function App() {
             autoPlay
             muted
           ></video>
-        )}
-
-        {selectedVideo && (
-          <div className="mt-4">
-            <h2 className="text-xl font-bold mb-2">{selectedVideo.title}</h2>
-            <video controls src={selectedVideo.path} className="w-full h-auto"></video>
-          </div>
         )}
       </div>
 
