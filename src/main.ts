@@ -2,13 +2,48 @@ import { app, BrowserWindow, ipcMain, dialog, desktopCapturer } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import Store from 'electron-store';
+import ffmpegPath from 'ffmpeg-static';
+import ffmpeg from 'fluent-ffmpeg';
+import express from 'express';
 
 import started from 'electron-squirrel-startup';
+
+let videoServer: any = null;
+let videoServerPort: number | null = null;
+
+const startVideoServer = (folderPath: string) => {
+  if (videoServer) {
+    videoServer.close();
+  }
+  const app = express();
+  app.use(express.static(folderPath));
+
+  videoServer = app.listen(0, () => {
+    videoServerPort = videoServer.address().port;
+    console.log(`Video server started on port ${videoServerPort} serving from ${folderPath}`);
+  });
+};
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
 }
+
+// Set the path to the ffmpeg executable
+const getFfmpegPath = () => {
+  let ffmpegBinPath;
+  if (app.isPackaged) {
+    // For packaged app, ffmpeg is included as an extra resource
+    ffmpegBinPath = path.join(process.resourcesPath, 'ffmpeg');
+  } else {
+    // In development, ffmpeg-static places the binary in node_modules
+    ffmpegBinPath = path.join(__dirname, '..', '..', 'node_modules', 'ffmpeg-static', 'ffmpeg');
+  }
+  console.log(`Resolved FFmpeg path: ${ffmpegBinPath}`);
+  return ffmpegBinPath;
+};
+
+ffmpeg.setFfmpegPath(getFfmpegPath());
 
 const store = new Store();
 
@@ -41,6 +76,7 @@ const createWindow = () => {
     if (!canceled && filePaths.length > 0) {
       const selectedPath = filePaths[0];
       store.set('saveFolderPath', selectedPath); // Save to store
+      startVideoServer(selectedPath); // Start server with new path
       event.sender.send('selected-folder', selectedPath);
     } else {
       event.sender.send('selected-folder', ''); // Send empty string if canceled
@@ -109,7 +145,7 @@ const createWindow = () => {
         const ext = path.extname(file).toLowerCase().substring(1);
         return videoExtensions.includes(ext);
       }).map(file => path.join(targetPath, file));
-      return videoFiles;
+      return videoFiles.map(filePath => `http://localhost:${videoServerPort}/${path.basename(filePath)}`);
     } catch (error) {
       console.error('Error reading video folder:', error);
       return [];
@@ -125,7 +161,11 @@ const createWindow = () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.on('ready', () => {
+  const storedPath = store.get('saveFolderPath', app.getPath('videos')) as string;
+  startVideoServer(storedPath);
+  createWindow();
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

@@ -5,6 +5,7 @@
   "description": "My Electron application description",
   "main": ".vite/build/main.js",
   "scripts": {
+    "prestart": "mkdir -p .vite/build && cp node_modules/ffmpeg-static/ffmpeg .vite/build/ffmpeg",
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
