@@ -17,6 +17,8 @@ function App() {
   const [selectedVideos, setSelectedVideos] = useState<VideoItem[]>([]); // Nouvel état pour la sélection multiple
   const [isMultiSelectMode, setIsMultiSelectMode] = useState<boolean>(false); // Nouvel état pour le mode multi-sélection
   const [searchQuery, setSearchQuery] = useState<string>(''); // Nouvel état pour la chaîne de recherche
+  const [currentPage, setCurrentPage] = useState<number>(1); // Nouvel état pour la page actuelle
+  const [itemsPerPage] = useState<number>(10); // Nombre d'éléments par page
 
   const [isCameraOn, setIsCameraOn] = useState<boolean>(false);
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -40,6 +42,23 @@ function App() {
   const filteredVideos = videos.filter(video =>
     video.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Calculer les vidéos pour la page actuelle
+  const indexOfLastVideo = currentPage * itemsPerPage;
+  const indexOfFirstVideo = indexOfLastVideo - itemsPerPage;
+  const paginatedVideos = filteredVideos.slice(indexOfFirstVideo, indexOfLastVideo);
+
+  // Calculer le nombre total de pages
+  const totalPages = Math.ceil(filteredVideos.length / itemsPerPage);
+
+  // Fonctions pour changer de page
+  const goToNextPage = () => {
+    setCurrentPage(prevPage => Math.min(prevPage + 1, totalPages));
+  };
+
+  const goToPreviousPage = () => {
+    setCurrentPage(prevPage => Math.max(prevPage - 1, 1));
+  };
 
   useEffect(() => {
     // Écoute la réponse du processus principal après la sélection d'un fichier vidéo
@@ -193,7 +212,7 @@ function App() {
       <div className="flex-grow p-4 relative w-full md:w-3/4 lg:w-4/5">
         {activeView === 'library' && (
           <VideoLibrary
-            videos={filteredVideos}
+            videos={paginatedVideos}
             onOpenRecorder={() => setShowScreenRecorderModal(true)}
             onSelectVideo={handleSelectVideo}
             onShareVideo={handleShareVideo}
@@ -207,6 +226,10 @@ function App() {
             onShareSelected={handleShareSelectedVideos}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            goToNextPage={goToNextPage}
+            goToPreviousPage={goToPreviousPage}
           />
         )}
         

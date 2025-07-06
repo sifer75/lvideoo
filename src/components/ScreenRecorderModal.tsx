@@ -113,6 +113,11 @@ function ScreenRecorderModal({ onClose, isCameraOn, cameraStream, handleToggleCa
       mediaRecorderRef.current.start();
     } catch (error) {
       console.error('Erreur lors du démarrage de l\'enregistrement:', error);
+      if (error.name === 'NotReadableError') {
+        alert("Erreur: Impossible d'accéder à la source vidéo. Veuillez vérifier les permissions d'enregistrement d'écran dans les préférences système de votre OS.");
+      } else {
+        alert(`Erreur lors du démarrage de l'enregistrement: ${error.message}`);
+      }
       setRecordingStatus('Erreur');
     }
   };

@@ -20,11 +20,13 @@ interface VideoLibraryProps {
   onToggleSelectMode: () => void;
   onDeleteSelected: () => void;
   onShareSelected: () => void;
-  searchQuery: string; // Nouvelle prop pour la chaîne de recherche
-  onSearchChange: (query: string) => void; // Nouvelle prop pour le changement de recherche
+  currentPage: number; // Nouvelle prop pour la page actuelle
+  totalPages: number; // Nouvelle prop pour le nombre total de pages
+  goToNextPage: () => void; // Nouvelle prop pour aller à la page suivante
+  goToPreviousPage: () => void; // Nouvelle prop pour aller à la page précédente
 }
 
-function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onDeleteVideo, onImportVideo, selectedVideos, onToggleSelect, isMultiSelectMode, onToggleSelectMode, onDeleteSelected, onShareSelected, searchQuery, onSearchChange }: VideoLibraryProps) {
+function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onDeleteVideo, onImportVideo, selectedVideos, onToggleSelect, isMultiSelectMode, onToggleSelectMode, onDeleteSelected, onShareSelected, searchQuery, onSearchChange, currentPage, totalPages, goToNextPage, goToPreviousPage }: VideoLibraryProps) {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Ma Librairie</h1>
@@ -110,6 +112,25 @@ function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onD
           </ul>
         )}
       </div>
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-4">
+          <button
+            onClick={goToPreviousPage}
+            disabled={currentPage === 1}
+            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+          >
+            Précédent
+          </button>
+          <span className="text-white">Page {currentPage} sur {totalPages}</span>
+          <button
+            onClick={goToNextPage}
+            disabled={currentPage === totalPages}
+            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+          >
+            Suivant
+          </button>
+        </div>
+      )}
     </div>
   );
 }
