@@ -16,6 +16,7 @@ function App() {
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null); // Nouvelle état pour la vidéo sélectionnée
   const [selectedVideos, setSelectedVideos] = useState<VideoItem[]>([]); // Nouvel état pour la sélection multiple
   const [isMultiSelectMode, setIsMultiSelectMode] = useState<boolean>(false); // Nouvel état pour le mode multi-sélection
+  const [searchQuery, setSearchQuery] = useState<string>(''); // Nouvel état pour la chaîne de recherche
 
   const [isCameraOn, setIsCameraOn] = useState<boolean>(false);
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -24,16 +25,21 @@ function App() {
   const refreshVideoList = async () => {
     const storedPath = await window.electronAPI.getStoredSaveFolderPath();
     if (storedPath) {
-      const videoPaths = await window.electronAPI.getVideosInFolder(storedPath);
-      const newVideos = videoPaths.map(path => ({
-        id: path,
-        title: path.split(/[\\/]/).pop() || 'Vidéo',
-        path: path,
+      const videoUrls = await window.electronAPI.getVideosInFolder(storedPath);
+      const newVideos = videoUrls.map(url => ({
+        id: url,
+        title: url.split(/[\\/]/).pop() || 'Vidéo',
+        path: url,
         shareLink: '',
       }));
       setVideos(newVideos);
     }
   };
+
+  // Filtrer les vidéos en fonction de la chaîne de recherche
+  const filteredVideos = videos.filter(video =>
+    video.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     // Écoute la réponse du processus principal après la sélection d'un fichier vidéo
@@ -187,7 +193,7 @@ function App() {
       <div className="flex-grow p-4 relative w-full md:w-3/4 lg:w-4/5">
         {activeView === 'library' && (
           <VideoLibrary
-            videos={videos}
+            videos={filteredVideos}
             onOpenRecorder={() => setShowScreenRecorderModal(true)}
             onSelectVideo={handleSelectVideo}
             onShareVideo={handleShareVideo}
@@ -199,6 +205,8 @@ function App() {
             onToggleSelectMode={() => setIsMultiSelectMode(prev => !prev)}
             onDeleteSelected={handleDeleteSelectedVideos}
             onShareSelected={handleShareSelectedVideos}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
           />
         )}
         

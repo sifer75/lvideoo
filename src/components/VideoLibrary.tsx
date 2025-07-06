@@ -16,13 +16,27 @@ interface VideoLibraryProps {
   onImportVideo: () => void;
   selectedVideos: VideoItem[];
   onToggleSelect: (video: VideoItem) => void;
-  isMultiSelectMode: boolean; // Nouvelle prop pour le mode multi-sélection
+  isMultiSelectMode: boolean;
+  onToggleSelectMode: () => void;
+  onDeleteSelected: () => void;
+  onShareSelected: () => void;
+  searchQuery: string; // Nouvelle prop pour la chaîne de recherche
+  onSearchChange: (query: string) => void; // Nouvelle prop pour le changement de recherche
 }
 
-function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onDeleteVideo, onImportVideo, selectedVideos, onToggleSelect, isMultiSelectMode, onToggleSelectMode, onDeleteSelected, onShareSelected }: VideoLibraryProps) {
+function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onDeleteVideo, onImportVideo, selectedVideos, onToggleSelect, isMultiSelectMode, onToggleSelectMode, onDeleteSelected, onShareSelected, searchQuery, onSearchChange }: VideoLibraryProps) {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Ma Librairie</h1>
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Rechercher des vidéos..."
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
       <div className="flex space-x-2 mb-4">
         <button
           onClick={onOpenRecorder}
