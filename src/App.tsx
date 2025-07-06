@@ -96,6 +96,13 @@ function App() {
     setSelectedVideo(video);
   };
 
+  const handleShareVideo = (video: VideoItem) => {
+    // Ici, nous allons copier le chemin de la vidéo dans le presse-papiers
+    // Dans une application réelle, vous généreriez un lien de partage unique
+    window.electronAPI.copyToClipboard(video.path);
+    alert(`Lien de partage copié: ${video.path}`);
+  };
+
   const handleCloseRecorderModal = () => {
     setShowScreenRecorderModal(false);
     if (isCameraOn) {
@@ -123,6 +130,7 @@ function App() {
             videos={videos}
             onOpenRecorder={() => setShowScreenRecorderModal(true)}
             onSelectVideo={handleSelectVideo}
+            onShareVideo={handleShareVideo}
           />
         )}
         

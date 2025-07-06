@@ -156,6 +156,11 @@ const createWindow = () => {
   ipcMain.handle('get-stored-save-folder-path', () => {
     return store.get('saveFolderPath', '');
   });
+
+  // Handle copy to clipboard
+  ipcMain.on('copy-to-clipboard', (event, text: string) => {
+    clipboard.writeText(text);
+  });
 };
 
 // This method will be called when Electron has finished
