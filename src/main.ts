@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, desktopCapturer } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, desktopCapturer, pushNotifications } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import Store from 'electron-store';
@@ -226,7 +226,7 @@ const createWindow = () => {
             reject(err);
           })
           .screenshots({
-            timestamps: [0.0], // Changed to 0.2 seconds
+            timestamps: [0.0pushNotificationsp], // Changed to 0.2 seconds
             filename: thumbnailFileName,
             folder: tempDir,
             size: '320x180',

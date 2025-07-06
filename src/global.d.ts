@@ -12,6 +12,7 @@ declare global {
       openVideoFileDialog: () => void;
       getVideosInFolder: (folderPath: string) => Promise<string[]>;
       getStoredSaveFolderPath: () => Promise<string>;
+      getVideoThumbnail: (videoPath: string) => Promise<string | null>;
     };
   }
 
