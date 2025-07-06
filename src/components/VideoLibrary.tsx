@@ -11,10 +11,11 @@ interface VideoLibraryProps {
   videos: VideoItem[];
   onOpenRecorder: () => void;
   onSelectVideo: (video: VideoItem) => void;
-  onShareVideo: (video: VideoItem) => void; // Nouvelle prop pour le partage
+  onShareVideo: (video: VideoItem) => void;
+  onDeleteVideo: (video: VideoItem) => void; // Nouvelle prop pour la suppression
 }
 
-function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo }: VideoLibraryProps) {
+function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onDeleteVideo }: VideoLibraryProps) {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Ma Librairie</h1>
@@ -40,6 +41,12 @@ function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo }: V
                   className="bg-blue-500 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded ml-2"
                 >
                   Partager
+                </button>
+                <button
+                  onClick={() => onDeleteVideo(video)}
+                  className="bg-red-500 hover:bg-red-700 text-white text-xs py-1 px-2 rounded ml-2"
+                >
+                  Supprimer
                 </button>
               </li>
             ))}

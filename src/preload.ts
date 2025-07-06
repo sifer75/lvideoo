@@ -23,4 +23,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getVideosInFolder: (folderPath: string) => ipcRenderer.invoke('get-videos-in-folder', folderPath),
   getStoredSaveFolderPath: () => ipcRenderer.invoke('get-stored-save-folder-path'),
   copyToClipboard: (text: string) => ipcRenderer.send('copy-to-clipboard', text),
+  deleteVideo: (filePath: string) => ipcRenderer.invoke('delete-video', filePath),
 });

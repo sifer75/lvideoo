@@ -161,6 +161,17 @@ const createWindow = () => {
   ipcMain.on('copy-to-clipboard', (event, text: string) => {
     clipboard.writeText(text);
   });
+
+  // Handle delete video
+  ipcMain.handle('delete-video', async (event, filePath: string) => {
+    try {
+      await fs.promises.unlink(filePath);
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      return { success: false, error: error.message };
+    }
+  });
 };
 
 // This method will be called when Electron has finished

@@ -103,6 +103,19 @@ function App() {
     alert(`Lien de partage copié: ${video.path}`);
   };
 
+  const handleDeleteVideo = async (video: VideoItem) => {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer la vidéo "${video.title}" ?`)) {
+      try {
+        await window.electronAPI.deleteVideo(video.path);
+        alert(`Vidéo "${video.title}" supprimée avec succès.`);
+        setVideos(prevVideos => prevVideos.filter(v => v.id !== video.id));
+        setSelectedVideo(null); // Désélectionner la vidéo si elle est supprimée
+      } catch (error) {
+        alert(`Erreur lors de la suppression de la vidéo: ${error.message}`);
+      }
+    }
+  };
+
   const handleCloseRecorderModal = () => {
     setShowScreenRecorderModal(false);
     if (isCameraOn) {
@@ -131,6 +144,7 @@ function App() {
             onOpenRecorder={() => setShowScreenRecorderModal(true)}
             onSelectVideo={handleSelectVideo}
             onShareVideo={handleShareVideo}
+            onDeleteVideo={handleDeleteVideo}
           />
         )}
         
