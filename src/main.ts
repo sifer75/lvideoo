@@ -159,7 +159,7 @@ const createWindow = () => {
 
   // Handle copy to clipboard
   ipcMain.on('copy-to-clipboard', (event, text: string) => {
-    clipboard.writeText(text);
+    require('electron').clipboard.writeText(text);
   });
 
   // Handle delete video
