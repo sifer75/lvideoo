@@ -172,6 +172,53 @@ const createWindow = () => {
       return { success: false, error: error.message };
     }
   });
+
+  ipcMain.handle('get-video-thumbnail', async (event, videoPath: string) => {
+    try {
+      const url = new URL(videoPath);
+      if (url.protocol !== 'http:') {
+        throw new Error('Invalid protocol for thumbnail generation');
+      }
+      const videoFileName = path.basename(url.pathname);
+      const storedPath = store.get('saveFolderPath', app.getPath('videos')) as string;
+      const actualVideoPath = path.join(storedPath, videoFileName);
+
+      const tempDir = app.getPath('temp');
+      const thumbnailFileName = `${path.basename(videoFileName, path.extname(videoFileName))}.png`;
+      const thumbnailPath = path.join(tempDir, thumbnailFileName);
+
+      // Check if thumbnail already exists
+      if (fs.existsSync(thumbnailPath)) {
+        const data = await fs.promises.readFile(thumbnailPath);
+        return `data:image/png;base64,${data.toString('base64')}`;
+      }
+
+      return new Promise((resolve, reject) => {
+        ffmpeg(actualVideoPath)
+          .on('end', async () => {
+            try {
+              const data = await fs.promises.readFile(thumbnailPath);
+              resolve(`data:image/png;base64,${data.toString('base64')}`);
+            } catch (err) {
+              reject(err);
+            }
+          })
+          .on('error', (err) => {
+            console.error(`Error generating thumbnail for ${actualVideoPath}:`, err);
+            reject(err);
+          })
+          .screenshots({
+            timestamps: ['1%'],
+            filename: thumbnailFileName,
+            folder: tempDir,
+            size: '320x180',
+          });
+      });
+    } catch (error) {
+      console.error('Error processing video path for thumbnail:', error);
+      return null; // Return null to indicate an error
+    }
+  });
 };
 
 // This method will be called when Electron has finished

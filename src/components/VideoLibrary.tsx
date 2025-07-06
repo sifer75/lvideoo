@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface VideoItem {
   id: string;
@@ -20,11 +20,83 @@ interface VideoLibraryProps {
   onToggleSelectMode: () => void;
   onDeleteSelected: () => void;
   onShareSelected: () => void;
-  currentPage: number; // Nouvelle prop pour la page actuelle
-  totalPages: number; // Nouvelle prop pour le nombre total de pages
-  goToNextPage: () => void; // Nouvelle prop pour aller à la page suivante
-  goToPreviousPage: () => void; // Nouvelle prop pour aller à la page précédente
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  currentPage: number;
+  totalPages: number;
+  goToNextPage: () => void;
+  goToPreviousPage: () => void;
 }
+
+const VideoItemComponent = ({ video, onSelectVideo, onShareVideo, onDeleteVideo, onToggleSelect, isMultiSelectMode, isSelected }) => {
+  const [thumbnail, setThumbnail] = useState<string | null>(null);
+  const videoRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          window.electronAPI.getVideoThumbnail(video.path).then(thumbnailDataUrl => {
+            if (thumbnailDataUrl) {
+              setThumbnail(thumbnailDataUrl);
+            }
+          });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (videoRef.current) {
+      observer.observe(videoRef.current);
+    }
+
+    return () => {
+      if (videoRef.current) {
+        observer.unobserve(videoRef.current);
+      }
+    };
+  }, [video.path]);
+
+  return (
+    <li
+      ref={videoRef}
+      key={video.id}
+      className={`bg-gray-700 p-2 rounded flex items-center cursor-pointer ${!isMultiSelectMode ? 'hover:bg-gray-600 transition-all duration-300 ease-in-out transform' : ''}`}
+      onClick={isMultiSelectMode ? () => onToggleSelect(video) : undefined}
+    >
+      {isMultiSelectMode && (
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onToggleSelect(video)}
+          className="mr-2"
+        />
+      )}
+      <div className="w-32 h-20 bg-gray-800 mr-4 flex-shrink-0">
+        {thumbnail ? (
+          <img src={thumbnail} alt={`Vignette de ${video.title}`} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400">Chargement...</div>
+        )}
+      </div>
+      <span onClick={!isMultiSelectMode ? () => onSelectVideo(video) : undefined} className="flex-grow">{video.title}</span>
+      <button
+        onClick={(e) => { e.stopPropagation(); onShareVideo(video); }}
+        className="bg-blue-500 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded ml-2"
+      >
+        Partager
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); onDeleteVideo(video); }}
+        className="bg-red-500 hover:bg-red-700 text-white text-xs py-1 px-2 rounded ml-2"
+      >
+        Supprimer
+      </button>
+    </li>
+  );
+};
+
 
 function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onDeleteVideo, onImportVideo, selectedVideos, onToggleSelect, isMultiSelectMode, onToggleSelectMode, onDeleteSelected, onShareSelected, searchQuery, onSearchChange, currentPage, totalPages, goToNextPage, goToPreviousPage }: VideoLibraryProps) {
   return (
@@ -81,33 +153,16 @@ function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onD
         ) : (
           <ul className="space-y-2">
             {videos.map((video) => (
-              <li
+              <VideoItemComponent
                 key={video.id}
-                className={`bg-gray-700 p-2 rounded flex justify-between items-center cursor-pointer ${!isMultiSelectMode ? 'hover:bg-gray-600 transition-all duration-300 ease-in-out transform' : ''}`}
-                onClick={isMultiSelectMode ? () => onToggleSelect(video) : undefined} // Gérer le clic sur toute la div en mode multi-sélection
-              >
-                {isMultiSelectMode && (
-                  <input
-                    type="checkbox"
-                    checked={selectedVideos.some(v => v.id === video.id)}
-                    onChange={() => onToggleSelect(video)}
-                    className="mr-2"
-                  />
-                )}
-                <span onClick={!isMultiSelectMode ? () => onSelectVideo(video) : undefined} className="flex-grow">{video.title}</span>
-                <button
-                  onClick={() => onShareVideo(video)}
-                  className="bg-blue-500 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded ml-2"
-                >
-                  Partager
-                </button>
-                <button
-                  onClick={() => onDeleteVideo(video)}
-                  className="bg-red-500 hover:bg-red-700 text-white text-xs py-1 px-2 rounded ml-2"
-                >
-                  Supprimer
-                </button>
-              </li>
+                video={video}
+                onSelectVideo={onSelectVideo}
+                onShareVideo={onShareVideo}
+                onDeleteVideo={onDeleteVideo}
+                onToggleSelect={onToggleSelect}
+                isMultiSelectMode={isMultiSelectMode}
+                isSelected={selectedVideos.some(v => v.id === video.id)}
+              />
             ))}
           </ul>
         )}
