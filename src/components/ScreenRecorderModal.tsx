@@ -133,7 +133,7 @@ function ScreenRecorderModal({ onClose, isCameraOn, cameraStream, handleToggleCa
   };
 
   const handleChooseFolder = () => {
-    window.electronAPI.send('open-folder-dialog');
+    window.electronAPI.send('open-folder-dialog', null);
   };
 
   return (

@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-interface VideoItem {
+export interface VideoItem {
   id: string;
   title: string;
   path: string;
   shareLink: string;
 }
 
-interface VideoLibraryProps {
+export interface VideoLibraryProps {
   videos: VideoItem[];
   onOpenRecorder: () => void;
   onSelectVideo: (video: VideoItem) => void;
@@ -28,7 +28,17 @@ interface VideoLibraryProps {
   goToPreviousPage: () => void;
 }
 
-const VideoItemComponent = ({ video, onSelectVideo, onShareVideo, onDeleteVideo, onToggleSelect, isMultiSelectMode, isSelected }) => {
+interface VideoItemComponentProps {
+  video: VideoItem;
+  onSelectVideo: (video: VideoItem) => void;
+  onShareVideo: (video: VideoItem) => void;
+  onDeleteVideo: (video: VideoItem) => void;
+  onToggleSelect: (video: VideoItem) => void;
+  isMultiSelectMode: boolean;
+  isSelected: boolean;
+}
+
+const VideoItemComponent: React.FC<VideoItemComponentProps> = ({ video, onSelectVideo, onShareVideo, onDeleteVideo, onToggleSelect, isMultiSelectMode, isSelected }) => {
   const [thumbnail, setThumbnail] = useState<string | null>(null);
   const videoRef = useRef<HTMLLIElement>(null);
 

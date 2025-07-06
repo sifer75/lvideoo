@@ -158,12 +158,10 @@ function App() {
 
   const handleImportVideo = async () => {
     const result = await window.electronAPI.openVideoFileDialog();
-    if (result && result.filePath) {
-      // Le processus principal a déjà copié le fichier et renvoyé le nouveau chemin/URL
-      // Nous devons rafraîchir la liste des vidéos pour inclure la nouvelle vidéo
+    if (!result.canceled && result.filePath) {
       refreshVideoList();
       alert(`Vidéo importée avec succès: ${result.filePath}`);
-    } else if (result && result.error) {
+    } else if (result.error) {
       alert(`Erreur lors de l'importation de la vidéo: ${result.error}`);
     }
   };

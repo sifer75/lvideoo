@@ -132,7 +132,7 @@ const createWindow = () => {
   });
 
   // Handle opening video file dialog
-  ipcMain.on('open-video-file-dialog', async (event) => {
+  ipcMain.handle('open-video-file-dialog', async (event) => {
     const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
       properties: ['openFile'],
       filters: [
@@ -141,9 +141,9 @@ const createWindow = () => {
     });
 
     if (!canceled && filePaths.length > 0) {
-      event.sender.send('selected-video-file', filePaths[0]);
+      return { filePath: filePaths[0], canceled: false };
     } else {
-      event.sender.send('selected-video-file', '');
+      return { filePath: '', canceled: true };
     }
   });
 

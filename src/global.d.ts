@@ -9,7 +9,7 @@ declare global {
       saveRecording: (data: { blob: ArrayBuffer, folderPath: string }) => void;
       onSaveRecordingSuccess: (func: (filePath: string) => void) => () => void;
       onSaveRecordingError: (func: (errorMessage: string) => void) => () => void;
-      openVideoFileDialog: () => void;
+      openVideoFileDialog: () => Promise<{ filePath: string; canceled: boolean; error?: string }>;
       getVideosInFolder: (folderPath: string) => Promise<string[]>;
       getStoredSaveFolderPath: () => Promise<string>;
       getVideoThumbnail: (videoPath: string) => Promise<string | null>;
