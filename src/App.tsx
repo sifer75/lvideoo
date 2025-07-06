@@ -136,9 +136,9 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex flex-col md:flex-row h-screen">
       {/* Menu latéral gauche */}
-      <div className="w-64 bg-gray-800 text-white flex flex-col p-4">
+      <div className="w-full md:w-1/4 lg:w-1/5 bg-gray-800 text-white flex flex-col p-4">
         <h2 className="text-xl font-bold mb-4">Menu</h2>
         <button
           onClick={() => setActiveView('library')}
@@ -149,7 +149,7 @@ function App() {
       </div>
 
       {/* Contenu principal */}
-      <div className="flex-grow p-4 relative">
+      <div className="flex-grow p-4 relative w-full md:w-3/4 lg:w-4/5">
         {activeView === 'library' && (
           <VideoLibrary
             videos={videos}

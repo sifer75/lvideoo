@@ -42,7 +42,7 @@ function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onD
             {videos.map((video) => (
               <li
                 key={video.id}
-                className="bg-gray-700 p-2 rounded flex justify-between items-center cursor-pointer hover:bg-gray-600"
+                className="bg-gray-700 p-2 rounded flex justify-between items-center cursor-pointer hover:bg-gray-600 transition-all duration-300 ease-in-out transform hover:scale-105"
               >
                 <span onClick={() => onSelectVideo(video)} className="flex-grow">{video.title}</span>
                 <button
