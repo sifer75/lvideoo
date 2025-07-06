@@ -19,6 +19,8 @@ function App() {
   const [searchQuery, setSearchQuery] = useState<string>(''); // Nouvel état pour la chaîne de recherche
   const [currentPage, setCurrentPage] = useState<number>(1); // Nouvel état pour la page actuelle
   const [itemsPerPage] = useState<number>(10); // Nombre d'éléments par page
+  const [showShareConfirmation, setShowShareConfirmation] = useState<boolean>(false);
+  const [shareConfirmationMessage, setShareConfirmationMessage] = useState<string>('');
 
   const [isCameraOn, setIsCameraOn] = useState<boolean>(false);
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -132,10 +134,13 @@ function App() {
   };
 
   const handleShareVideo = (video: VideoItem) => {
-    // Ici, nous allons copier le chemin de la vidéo dans le presse-papiers
-    // Dans une application réelle, vous généreriez un lien de partage unique
     window.electronAPI.copyToClipboard(video.path);
-    alert(`Lien de partage copié: ${video.path}`);
+    setShareConfirmationMessage(`Lien de partage copié: ${video.path}`);
+    setShowShareConfirmation(true);
+    setTimeout(() => {
+      setShowShareConfirmation(false);
+      setShareConfirmationMessage('');
+    }, 3000); // Masquer après 3 secondes
   };
 
   const handleDeleteVideo = async (video: VideoItem) => {
@@ -185,7 +190,12 @@ function App() {
 
     const shareLinks = selectedVideos.map(video => video.path).join('\n');
     window.electronAPI.copyToClipboard(shareLinks);
-    alert(`${selectedVideos.length} lien(s) de partage copié(s) dans le presse-papiers.`);
+    setShareConfirmationMessage(`${selectedVideos.length} lien(s) de partage copié(s) dans le presse-papiers.`);
+    setShowShareConfirmation(true);
+    setTimeout(() => {
+      setShowShareConfirmation(false);
+      setShareConfirmationMessage('');
+    }, 3000); // Masquer après 3 secondes
   };
 
   const handleCloseRecorderModal = () => {
@@ -257,6 +267,12 @@ function App() {
           cameraStream={cameraStreamRef.current}
           handleToggleCamera={handleToggleCamera}
         />
+      )}
+
+      {showShareConfirmation && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
+          {shareConfirmationMessage}
+        </div>
       )}
     </div>
   );
