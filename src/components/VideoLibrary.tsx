@@ -68,6 +68,7 @@ function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onD
               <li
                 key={video.id}
                 className={`bg-gray-700 p-2 rounded flex justify-between items-center cursor-pointer ${!isMultiSelectMode ? 'hover:bg-gray-600 transition-all duration-300 ease-in-out transform' : ''}`}
+                onClick={isMultiSelectMode ? () => onToggleSelect(video) : undefined} // Gérer le clic sur toute la div en mode multi-sélection
               >
                 {isMultiSelectMode && (
                   <input
@@ -77,7 +78,7 @@ function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onD
                     className="mr-2"
                   />
                 )}
-                <span onClick={() => onSelectVideo(video)} className="flex-grow">{video.title}</span>
+                <span onClick={!isMultiSelectMode ? () => onSelectVideo(video) : undefined} className="flex-grow">{video.title}</span>
                 <button
                   onClick={() => onShareVideo(video)}
                   className="bg-blue-500 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded ml-2"
