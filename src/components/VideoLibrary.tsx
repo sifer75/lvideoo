@@ -19,7 +19,7 @@ interface VideoLibraryProps {
   isMultiSelectMode: boolean; // Nouvelle prop pour le mode multi-sélection
 }
 
-function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onDeleteVideo, onImportVideo, selectedVideos, onToggleSelect, isMultiSelectMode, onToggleSelectMode }: VideoLibraryProps) {
+function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onDeleteVideo, onImportVideo, selectedVideos, onToggleSelect, isMultiSelectMode, onToggleSelectMode, onDeleteSelected, onShareSelected }: VideoLibraryProps) {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Ma Librairie</h1>
@@ -43,6 +43,22 @@ function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onD
           {isMultiSelectMode ? 'Désactiver Multi-sélection' : 'Activer Multi-sélection'}
         </button>
       </div>
+      {isMultiSelectMode && selectedVideos.length > 0 && (
+        <div className="flex space-x-2 mb-4">
+          <button
+            onClick={onDeleteSelected}
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Supprimer la sélection ({selectedVideos.length})
+          </button>
+          <button
+            onClick={onShareSelected}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Partager la sélection ({selectedVideos.length})
+          </button>
+        </div>
+      )}
       <div className="flex-grow overflow-y-auto">
         {videos.length === 0 ? (
           <p className="text-gray-400">Aucune vidéo enregistrée.</p>
@@ -51,7 +67,7 @@ function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onD
             {videos.map((video) => (
               <li
                 key={video.id}
-                className={`bg-gray-700 p-2 rounded flex justify-between items-center cursor-pointer ${!isMultiSelectMode ? 'hover:bg-gray-600 transition-all duration-300 ease-in-out transform hover:scale-105' : ''}`}
+                className={`bg-gray-700 p-2 rounded flex justify-between items-center cursor-pointer ${!isMultiSelectMode ? 'hover:bg-gray-600 transition-all duration-300 ease-in-out transform' : ''}`}
               >
                 {isMultiSelectMode && (
                   <input

@@ -138,6 +138,31 @@ function App() {
     }
   };
 
+  const handleDeleteSelectedVideos = async () => {
+    if (selectedVideos.length === 0) return;
+
+    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedVideos.length} vidéo(s) sélectionnée(s) ?`)) {
+      for (const video of selectedVideos) {
+        try {
+          await window.electronAPI.deleteVideo(video.path);
+        } catch (error) {
+          alert(`Erreur lors de la suppression de la vidéo "${video.title}": ${error.message}`);
+        }
+      }
+      setSelectedVideos([]); // Réinitialiser la sélection
+      refreshVideoList(); // Rafraîchir la liste
+      setSelectedVideo(null); // Désélectionner la vidéo affichée si elle a été supprimée
+    }
+  };
+
+  const handleShareSelectedVideos = () => {
+    if (selectedVideos.length === 0) return;
+
+    const shareLinks = selectedVideos.map(video => video.path).join('\n');
+    window.electronAPI.copyToClipboard(shareLinks);
+    alert(`${selectedVideos.length} lien(s) de partage copié(s) dans le presse-papiers.`);
+  };
+
   const handleCloseRecorderModal = () => {
     setShowScreenRecorderModal(false);
     if (isCameraOn) {
@@ -172,6 +197,8 @@ function App() {
             onToggleSelect={handleToggleSelect}
             isMultiSelectMode={isMultiSelectMode}
             onToggleSelectMode={() => setIsMultiSelectMode(prev => !prev)}
+            onDeleteSelected={handleDeleteSelectedVideos}
+            onShareSelected={handleShareSelectedVideos}
           />
         )}
         
