@@ -20,7 +20,7 @@ const startVideoServer = (folderPath: string) => {
 
   videoServer = app.listen(0, () => {
     videoServerPort = videoServer.address().port;
-    console.log(`Video server started on port ${videoServerPort} serving from ${folderPath}`);
+    
   });
 };
 
@@ -39,11 +39,23 @@ const getFfmpegPath = () => {
     // In development, ffmpeg-static places the binary in node_modules
     ffmpegBinPath = path.join(__dirname, '..', '..', 'node_modules', 'ffmpeg-static', 'ffmpeg');
   }
-  console.log(`Resolved FFmpeg path: ${ffmpegBinPath}`);
+  
   return ffmpegBinPath;
 };
 
+const getFfprobePath = () => {
+  let ffprobeBinPath;
+  if (app.isPackaged) {
+    ffprobeBinPath = path.join(process.resourcesPath, 'ffprobe');
+  } else {
+    ffprobeBinPath = require('ffprobe-static').path;
+  }
+  
+  return ffprobeBinPath;
+};
+
 ffmpeg.setFfmpegPath(getFfmpegPath());
+ffmpeg.setFfprobePath(getFfprobePath());
 
 const store = new Store();
 
@@ -195,20 +207,26 @@ const createWindow = () => {
 
       return new Promise((resolve, reject) => {
         ffmpeg(actualVideoPath)
-          .on('end', async () => {
+          .on('end', async (stdout, stderr) => {
             try {
+              // Check if the file exists before trying to read it
+              await fs.promises.access(thumbnailPath, fs.constants.F_OK);
               const data = await fs.promises.readFile(thumbnailPath);
               resolve(`data:image/png;base64,${data.toString('base64')}`);
             } catch (err) {
+              console.error(`Error accessing thumbnail file after generation:`, err);
               reject(err);
             }
           })
-          .on('error', (err) => {
-            console.error(`Error generating thumbnail for ${actualVideoPath}:`, err);
+          .on('error', (err, stdout, stderr) => {
+            console.error('Error generating thumbnail for ' + actualVideoPath);
+            console.error('ffmpeg error:', err.message);
+            console.error('ffmpeg stdout:', stdout);
+            console.error('ffmpeg stderr:', stderr);
             reject(err);
           })
           .screenshots({
-            timestamps: ['1%'],
+            timestamps: [0.0], // Changed to 0.2 seconds
             filename: thumbnailFileName,
             folder: tempDir,
             size: '320x180',
