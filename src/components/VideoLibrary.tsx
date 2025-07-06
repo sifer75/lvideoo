@@ -13,10 +13,13 @@ interface VideoLibraryProps {
   onSelectVideo: (video: VideoItem) => void;
   onShareVideo: (video: VideoItem) => void;
   onDeleteVideo: (video: VideoItem) => void;
-  onImportVideo: () => void; // Nouvelle prop pour importer une vidéo
+  onImportVideo: () => void;
+  selectedVideos: VideoItem[];
+  onToggleSelect: (video: VideoItem) => void;
+  isMultiSelectMode: boolean; // Nouvelle prop pour le mode multi-sélection
 }
 
-function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onDeleteVideo, onImportVideo }: VideoLibraryProps) {
+function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onDeleteVideo, onImportVideo, selectedVideos, onToggleSelect, isMultiSelectMode, onToggleSelectMode }: VideoLibraryProps) {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Ma Librairie</h1>
@@ -33,6 +36,12 @@ function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onD
         >
           Importer une vidéo
         </button>
+        <button
+          onClick={onToggleSelectMode}
+          className={`py-2 px-4 rounded ${isMultiSelectMode ? 'bg-green-700' : 'bg-gray-500'} hover:bg-green-600`}
+        >
+          {isMultiSelectMode ? 'Désactiver Multi-sélection' : 'Activer Multi-sélection'}
+        </button>
       </div>
       <div className="flex-grow overflow-y-auto">
         {videos.length === 0 ? (
@@ -42,8 +51,16 @@ function VideoLibrary({ videos, onOpenRecorder, onSelectVideo, onShareVideo, onD
             {videos.map((video) => (
               <li
                 key={video.id}
-                className="bg-gray-700 p-2 rounded flex justify-between items-center cursor-pointer hover:bg-gray-600 transition-all duration-300 ease-in-out transform hover:scale-105"
+                className={`bg-gray-700 p-2 rounded flex justify-between items-center cursor-pointer ${!isMultiSelectMode ? 'hover:bg-gray-600 transition-all duration-300 ease-in-out transform hover:scale-105' : ''}`}
               >
+                {isMultiSelectMode && (
+                  <input
+                    type="checkbox"
+                    checked={selectedVideos.some(v => v.id === video.id)}
+                    onChange={() => onToggleSelect(video)}
+                    className="mr-2"
+                  />
+                )}
                 <span onClick={() => onSelectVideo(video)} className="flex-grow">{video.title}</span>
                 <button
                   onClick={() => onShareVideo(video)}

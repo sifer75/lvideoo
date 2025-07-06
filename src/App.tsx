@@ -14,6 +14,8 @@ function App() {
   const [showScreenRecorderModal, setShowScreenRecorderModal] = useState<boolean>(false);
   const [activeView, setActiveView] = useState<'recorder' | 'library'>('library'); // 'recorder' ou 'library'
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null); // Nouvelle état pour la vidéo sélectionnée
+  const [selectedVideos, setSelectedVideos] = useState<VideoItem[]>([]); // Nouvel état pour la sélection multiple
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState<boolean>(false); // Nouvel état pour le mode multi-sélection
 
   const [isCameraOn, setIsCameraOn] = useState<boolean>(false);
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -96,6 +98,14 @@ function App() {
     setSelectedVideo(video);
   };
 
+  const handleToggleSelect = (video: VideoItem) => {
+    setSelectedVideos(prevSelected =>
+      prevSelected.some(v => v.id === video.id)
+        ? prevSelected.filter(v => v.id !== video.id)
+        : [...prevSelected, video]
+    );
+  };
+
   const handleShareVideo = (video: VideoItem) => {
     // Ici, nous allons copier le chemin de la vidéo dans le presse-papiers
     // Dans une application réelle, vous généreriez un lien de partage unique
@@ -158,6 +168,10 @@ function App() {
             onShareVideo={handleShareVideo}
             onDeleteVideo={handleDeleteVideo}
             onImportVideo={handleImportVideo}
+            selectedVideos={selectedVideos}
+            onToggleSelect={handleToggleSelect}
+            isMultiSelectMode={isMultiSelectMode}
+            onToggleSelectMode={() => setIsMultiSelectMode(prev => !prev)}
           />
         )}
         
