@@ -116,6 +116,18 @@ function App() {
     }
   };
 
+  const handleImportVideo = async () => {
+    const result = await window.electronAPI.openVideoFileDialog();
+    if (result && result.filePath) {
+      // Le processus principal a déjà copié le fichier et renvoyé le nouveau chemin/URL
+      // Nous devons rafraîchir la liste des vidéos pour inclure la nouvelle vidéo
+      refreshVideoList();
+      alert(`Vidéo importée avec succès: ${result.filePath}`);
+    } else if (result && result.error) {
+      alert(`Erreur lors de l'importation de la vidéo: ${result.error}`);
+    }
+  };
+
   const handleCloseRecorderModal = () => {
     setShowScreenRecorderModal(false);
     if (isCameraOn) {
@@ -145,6 +157,7 @@ function App() {
             onSelectVideo={handleSelectVideo}
             onShareVideo={handleShareVideo}
             onDeleteVideo={handleDeleteVideo}
+            onImportVideo={handleImportVideo}
           />
         )}
         

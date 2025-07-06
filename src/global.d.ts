@@ -1,6 +1,8 @@
 declare global {
   interface Window {
     electronAPI: {
+      copyToClipboard(path: string): unknown;
+      deleteVideo(path: string): unknown;
       send: (channel: string, data: any) => void;
       receive: (channel: string, func: (...args: any[]) => void) => () => void;
       getScreenSources: () => Promise<Array<{ id: string; name: string; thumbnail: string; display_id: string; }>>;
