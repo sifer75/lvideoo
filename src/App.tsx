@@ -213,7 +213,7 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen">
+    <div className="flex flex-col md:flex-row h-auto">
       {/* Menu latéral gauche */}
       <div className="w-full md:w-1/4 lg:w-1/5 bg-gray-800 text-white flex flex-col p-4">
         <h2 className="text-xl font-bold mb-4">Menu</h2>

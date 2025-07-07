@@ -1,7 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, desktopCapturer } from "electron";
 import path from "node:path";
 import fs from "node:fs";
-import Store from "electron-store";
 import ffmpeg from "fluent-ffmpeg";
 import express from "express";
 import { spawn, ChildProcess } from "child_process";
@@ -90,10 +89,16 @@ const getFfprobePath = () => {
   return ffprobeBinPath;
 };
 
+import Store from "electron-store";
+
+interface StoreSchema {
+  saveFolderPath: string;
+}
+
 ffmpeg.setFfmpegPath(getFfmpegPath());
 ffmpeg.setFfprobePath(getFfprobePath());
 
-const store = new Store();
+const store = new Store<StoreSchema>();
 
 const createWindow = () => {
   // Create the browser window.
@@ -191,7 +196,7 @@ const createWindow = () => {
     async (event, folderPath: string | undefined) => {
       const targetPath =
         folderPath ||
-        (store.get("saveFolderPath", app.getPath("videos")) as string); // Use stored path or default
+        store.get("saveFolderPath", app.getPath("videos")); // Use stored path or default
       try {
         const files = await fs.promises.readdir(targetPath);
         const videoExtensions = ["mp4", "webm", "mkv", "avi", "mov"];
@@ -243,7 +248,7 @@ const createWindow = () => {
       const storedPath = store.get(
         "saveFolderPath",
         app.getPath("videos"),
-      ) as string;
+      );
       const actualVideoPath = path.join(storedPath, videoFileName);
 
       const tempDir = app.getPath("temp");
@@ -304,7 +309,7 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on("ready", async () => {
-  const storedPath = store.get("saveFolderPath", app.getPath("videos"))
+  const storedPath = store.get("saveFolderPath", app.getPath("videos"));
   await startVideoServer(storedPath);
   createWindow();
 });
