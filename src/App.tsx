@@ -133,9 +133,18 @@ function App() {
     );
   };
 
-  const handleShareVideo = (video: VideoItem) => {
-    window.electronAPI.copyToClipboard(video.path);
-    setShareConfirmationMessage(`Lien de partage copié: ${video.path}`);
+  const handleShareVideo = async (video: VideoItem) => {
+    const publicUrl = await window.electronAPI.getPublicUrl();
+    if (publicUrl) {
+      const videoFileName = video.path.split(/[\\/]/).pop();
+      const shareableLink = `${publicUrl}/${videoFileName}`;
+      window.electronAPI.copyToClipboard(shareableLink);
+      setShareConfirmationMessage(`Lien de partage public copié: ${shareableLink}`);
+    } else {
+      const shareableLink = video.path;
+      window.electronAPI.copyToClipboard(shareableLink);
+      setShareConfirmationMessage(`Lien de partage local copié: ${shareableLink}`);
+    }
     setShowShareConfirmation(true);
     setTimeout(() => {
       setShowShareConfirmation(false);

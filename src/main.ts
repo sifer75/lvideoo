@@ -5,22 +5,50 @@ import Store from 'electron-store';
 import ffmpegPath from 'ffmpeg-static';
 import ffmpeg from 'fluent-ffmpeg';
 import express from 'express';
+import { spawn, ChildProcess } from 'child_process';
 
 import started from 'electron-squirrel-startup';
 
 let videoServer: any = null;
 let videoServerPort: number | null = null;
+let publicUrl: string | null = null;
+let ngrokProcess: ChildProcess | null = null;
 
-const startVideoServer = (folderPath: string) => {
+const startVideoServer = async (folderPath: string) => {
   if (videoServer) {
     videoServer.close();
+    if (ngrokProcess) {
+      ngrokProcess.kill();
+      ngrokProcess = null;
+    }
   }
   const app = express();
   app.use(express.static(folderPath));
 
-  videoServer = app.listen(0, () => {
+  videoServer = app.listen(0, async () => {
     videoServerPort = videoServer.address().port;
-    
+    console.log(`Video server listening on port: ${videoServerPort}`);
+
+    const ngrokBinPath = '/opt/homebrew/bin/ngrok'; // Chemin correct pour ngrok
+
+    // Start ngrok as a child process
+    ngrokProcess = spawn(ngrokBinPath, ['http', String(videoServerPort)], { shell: true });
+
+    // Add a delay to allow ngrok to start its web interface
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 2 seconds
+
+    try {
+      const response = await fetch('http://127.0.0.1:4040/api/tunnels');
+      const data = await response.json();
+      if (data.tunnels && data.tunnels.length > 0) {
+        publicUrl = data.tunnels[0].public_url;
+        console.log(`ngrok tunnel created at: ${publicUrl}`);
+      } else {
+        console.warn('No ngrok tunnels found via API.');
+      }
+    } catch (error) {
+      console.error('Error fetching ngrok tunnel info:', error);
+    }
   });
 };
 
@@ -237,23 +265,31 @@ const createWindow = () => {
       return null; // Return null to indicate an error
     }
   });
+
+  ipcMain.handle('get-public-url', () => {
+    return publicUrl;
+  });
 };
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', () => {
+app.on('ready', async () => {
   const storedPath = store.get('saveFolderPath', app.getPath('videos')) as string;
-  startVideoServer(storedPath);
+  await startVideoServer(storedPath);
   createWindow();
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+  if (ngrokProcess) {
+    ngrokProcess.kill();
+    ngrokProcess = null;
   }
 });
 
