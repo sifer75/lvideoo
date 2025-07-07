@@ -25,4 +25,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   copyToClipboard: (text: string) => ipcRenderer.send('copy-to-clipboard', text),
   deleteVideo: (filePath: string) => ipcRenderer.invoke('delete-video', filePath),
   getVideoThumbnail: (videoPath: string) => ipcRenderer.invoke('get-video-thumbnail', videoPath),
+  getPublicUrl: () => ipcRenderer.invoke('get-public-url'),
 });
