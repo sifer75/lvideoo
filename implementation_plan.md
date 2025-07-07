@@ -148,3 +148,30 @@
 3. **Tests des dialogues de fichiers et sauvegarde.**
 4. **Tests d’ergonomie sur le menu vidéo et système de partage.**
 5. **Validation finale et packaging.**
+
+---
+
+### **Phase 11 : Partage de Vidéos via un Tunnel Public (ngrok)**
+
+1.  **Installer et Configurer ngrok :**
+    -   Ajouter le paquet `ngrok` aux dépendances de développement du projet : `npm install --save-dev ngrok`.
+
+2.  **Intégrer ngrok dans le Processus Principal (`src/main.ts`) :**
+    -   Importer `ngrok`.
+    -   Au démarrage du serveur Express, lancer `ngrok` pour créer un tunnel public pointant vers le port du serveur vidéo local.
+    -   Stocker l'URL publique générée par `ngrok` dans une variable globale (ex: `publicUrl`).
+    -   Gérer la déconnexion de `ngrok` à la fermeture de l'application pour libérer les ressources.
+
+3.  **Créer un Canal de Communication IPC pour l'URL Publique :**
+    -   Dans `src/main.ts`, mettre en place un gestionnaire d'événements `ipcMain.handle` (ex: `get-public-url`) qui renverra l'URL publique stockée.
+    -   Dans `src/preload.ts`, exposer une fonction (ex: `getPublicUrl`) qui appellera ce gestionnaire via `ipcRenderer.invoke`.
+
+4.  **Mettre à Jour la Logique de Partage dans l'Interface React (`src/App.tsx`) :**
+    -   Modifier la fonction `handleShareVideo`.
+    -   Avant de copier le lien, appeler la nouvelle fonction `window.electronAPI.getPublicUrl()` pour récupérer l'URL de base du tunnel.
+    -   Construire le lien de partage complet en combinant l'URL publique de `ngrok` avec le nom du fichier vidéo (ex: `publicUrl + '/' + video.title`).
+    -   Copier ce nouveau lien public dans le presse-papiers.
+
+5.  **Améliorer l'Expérience Utilisateur :**
+    -   Modifier le message de confirmation pour afficher le lien public qui a été copié.
+    -   S'assurer que la gestion des erreurs est en place si `ngrok` ne parvient pas à démarrer.
