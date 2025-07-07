@@ -253,7 +253,7 @@ function App() {
         {selectedVideo && (
           <div className="mt-4">
             <h2 className="text-xl font-bold mb-2">{selectedVideo.title}</h2>
-            <video controls src={selectedVideo.path} className="w-full h-auto"></video>
+            <video controls autoPlay key={selectedVideo.id} src={selectedVideo.path} className="w-full h-auto"></video>
           </div>
         )}
       </div>

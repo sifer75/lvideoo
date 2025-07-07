@@ -73,7 +73,7 @@ const VideoItemComponent: React.FC<VideoItemComponentProps> = ({ video, onSelect
       ref={videoRef}
       key={video.id}
       className={`bg-gray-700 p-2 rounded flex items-center cursor-pointer ${!isMultiSelectMode ? 'hover:bg-gray-600 transition-all duration-300 ease-in-out transform' : ''}`}
-      onClick={isMultiSelectMode ? () => onToggleSelect(video) : undefined}
+      onClick={isMultiSelectMode ? () => onToggleSelect(video) : () => onSelectVideo(video)}
     >
       {isMultiSelectMode && (
         <input
@@ -90,7 +90,7 @@ const VideoItemComponent: React.FC<VideoItemComponentProps> = ({ video, onSelect
           <div className="w-full h-full flex items-center justify-center text-gray-400">Chargement...</div>
         )}
       </div>
-      <span onClick={!isMultiSelectMode ? () => onSelectVideo(video) : undefined} className="flex-grow">{video.title}</span>
+      <span className="flex-grow">{video.title}</span>
       <button
         onClick={(e) => { e.stopPropagation(); onShareVideo(video); }}
         className="bg-blue-500 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded ml-2"

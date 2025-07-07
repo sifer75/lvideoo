@@ -226,7 +226,7 @@ const createWindow = () => {
             reject(err);
           })
           .screenshots({
-            timestamps: [0.0pushNotificationsp], // Changed to 0.2 seconds
+            timestamps: [0.1], // Changed to 0.1 seconds
             filename: thumbnailFileName,
             folder: tempDir,
             size: '320x180',
