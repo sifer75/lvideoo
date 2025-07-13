@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import ScreenRecorderModal from './components/ScreenRecorderModal';
+import ScreenRecorderModal from './components/screenRecorderModal/ScreenRecorderModal';
 import VideoLibrary from './components/VideoLibrary';
 
 interface VideoItem {
@@ -14,8 +14,6 @@ function App() {
   const [showScreenRecorderModal, setShowScreenRecorderModal] = useState<boolean>(false);
   const [activeView, setActiveView] = useState<'recorder' | 'library'>('library'); // 'recorder' ou 'library'
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null); // Nouvelle état pour la vidéo sélectionnée
-  const [selectedVideos, setSelectedVideos] = useState<VideoItem[]>([]); // Nouvel état pour la sélection multiple
-  const [isMultiSelectMode, setIsMultiSelectMode] = useState<boolean>(false); // Nouvel état pour le mode multi-sélection
   const [searchQuery, setSearchQuery] = useState<string>(''); // Nouvel état pour la chaîne de recherche
   const [currentPage, setCurrentPage] = useState<number>(1); // Nouvel état pour la page actuelle
   const [itemsPerPage] = useState<number>(10); // Nombre d'éléments par page
@@ -125,86 +123,6 @@ function App() {
     setSelectedVideo(video);
   };
 
-  const handleToggleSelect = (video: VideoItem) => {
-    setSelectedVideos(prevSelected =>
-      prevSelected.some(v => v.id === video.id)
-        ? prevSelected.filter(v => v.id !== video.id)
-        : [...prevSelected, video]
-    );
-  };
-
-  const handleShareVideo = async (video: VideoItem) => {
-    const publicUrl = await window.electronAPI.getPublicUrl();
-    if (publicUrl) {
-      const videoFileName = video.path.split(/[\\/]/).pop();
-      const shareableLink = `${publicUrl}/${videoFileName}`;
-      window.electronAPI.copyToClipboard(shareableLink);
-      setShareConfirmationMessage(`Lien de partage public copié: ${shareableLink}`);
-    } else {
-      const shareableLink = video.path;
-      window.electronAPI.copyToClipboard(shareableLink);
-      setShareConfirmationMessage(`Lien de partage local copié: ${shareableLink}`);
-    }
-    setShowShareConfirmation(true);
-    setTimeout(() => {
-      setShowShareConfirmation(false);
-      setShareConfirmationMessage('');
-    }, 3000); // Masquer après 3 secondes
-  };
-
-  const handleDeleteVideo = async (video: VideoItem) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer la vidéo "${video.title}" ?`)) {
-      try {
-        await window.electronAPI.deleteVideo(video.path);
-        alert(`Vidéo "${video.title}" supprimée avec succès.`);
-        setVideos(prevVideos => prevVideos.filter(v => v.id !== video.id));
-        setSelectedVideo(null); // Désélectionner la vidéo si elle est supprimée
-      } catch (error) {
-        alert(`Erreur lors de la suppression de la vidéo: ${error.message}`);
-      }
-    }
-  };
-
-  const handleImportVideo = async () => {
-    const result = await window.electronAPI.openVideoFileDialog();
-    if (!result.canceled && result.filePath) {
-      refreshVideoList();
-      alert(`Vidéo importée avec succès: ${result.filePath}`);
-    } else if (result.error) {
-      alert(`Erreur lors de l'importation de la vidéo: ${result.error}`);
-    }
-  };
-
-  const handleDeleteSelectedVideos = async () => {
-    if (selectedVideos.length === 0) return;
-
-    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedVideos.length} vidéo(s) sélectionnée(s) ?`)) {
-      for (const video of selectedVideos) {
-        try {
-          await window.electronAPI.deleteVideo(video.path);
-        } catch (error) {
-          alert(`Erreur lors de la suppression de la vidéo "${video.title}": ${error.message}`);
-        }
-      }
-      setSelectedVideos([]); // Réinitialiser la sélection
-      refreshVideoList(); // Rafraîchir la liste
-      setSelectedVideo(null); // Désélectionner la vidéo affichée si elle a été supprimée
-    }
-  };
-
-  const handleShareSelectedVideos = () => {
-    if (selectedVideos.length === 0) return;
-
-    const shareLinks = selectedVideos.map(video => video.path).join('\n');
-    window.electronAPI.copyToClipboard(shareLinks);
-    setShareConfirmationMessage(`${selectedVideos.length} lien(s) de partage copié(s) dans le presse-papiers.`);
-    setShowShareConfirmation(true);
-    setTimeout(() => {
-      setShowShareConfirmation(false);
-      setShareConfirmationMessage('');
-    }, 3000); // Masquer après 3 secondes
-  };
-
   const handleCloseRecorderModal = () => {
     setShowScreenRecorderModal(false);
     if (isCameraOn) {
@@ -232,15 +150,6 @@ function App() {
             videos={paginatedVideos}
             onOpenRecorder={() => setShowScreenRecorderModal(true)}
             onSelectVideo={handleSelectVideo}
-            onShareVideo={handleShareVideo}
-            onDeleteVideo={handleDeleteVideo}
-            onImportVideo={handleImportVideo}
-            selectedVideos={selectedVideos}
-            onToggleSelect={handleToggleSelect}
-            isMultiSelectMode={isMultiSelectMode}
-            onToggleSelectMode={() => setIsMultiSelectMode(prev => !prev)}
-            onDeleteSelected={handleDeleteSelectedVideos}
-            onShareSelected={handleShareSelectedVideos}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             currentPage={currentPage}
