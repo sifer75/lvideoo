@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import Button from "./Button";
-
 export interface VideoItem {
   id: string;
   title: string;
   path: string;
   shareLink: string;
 }
-
 export interface VideoLibraryProps {
   videos: VideoItem[];
   onOpenRecorder: () => void;
@@ -19,19 +17,16 @@ export interface VideoLibraryProps {
   goToNextPage: () => void;
   goToPreviousPage: () => void;
 }
-
 interface VideoItemComponentProps {
   video: VideoItem;
   onSelectVideo: (video: VideoItem) => void;
 }
-
 const VideoItemComponent: React.FC<VideoItemComponentProps> = ({
   video,
   onSelectVideo,
 }) => {
   const [thumbnail, setThumbnail] = useState<string | null>(null);
   const videoRef = useRef<HTMLLIElement>(null);
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -48,18 +43,15 @@ const VideoItemComponent: React.FC<VideoItemComponentProps> = ({
       },
       { threshold: 0.1 },
     );
-
     if (videoRef.current) {
       observer.observe(videoRef.current);
     }
-
     return () => {
       if (videoRef.current) {
         observer.unobserve(videoRef.current);
       }
     };
   }, [video.path]);
-
   return (
     <li
       ref={videoRef}
@@ -90,7 +82,6 @@ const VideoItemComponent: React.FC<VideoItemComponentProps> = ({
     </li>
   );
 };
-
 function VideoLibrary({
   videos,
   onOpenRecorder,
@@ -157,5 +148,4 @@ function VideoLibrary({
     </div>
   );
 }
-
 export default VideoLibrary;

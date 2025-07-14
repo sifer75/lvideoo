@@ -1,13 +1,10 @@
 import { RiCloseLine } from "react-icons/ri";
 import { LuHouse } from "react-icons/lu";
-
 import Button from "./Button";
-
 interface MenuModalProps {
   id: string;
   onClose: () => void;
 }
-
 function MenuModal({ id, onClose }: MenuModalProps) {
   return (
     <div id={`MenuModal__${id}`} className="w-full flex justify-between">
@@ -26,5 +23,4 @@ function MenuModal({ id, onClose }: MenuModalProps) {
     </div>
   );
 }
-
 export default MenuModal;

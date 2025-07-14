@@ -1,34 +1,30 @@
 import React, { useState, useEffect, useRef } from "react";
 import ScreenRecorderModal from "./components/screenRecorderModal/ScreenRecorderModal";
 import VideoLibrary from "./components/VideoLibrary";
-
 interface VideoItem {
   id: string;
   title: string;
   path: string;
   shareLink: string;
 }
-
 function App() {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [showScreenRecorderModal, setShowScreenRecorderModal] =
     useState<boolean>(true);
   const [activeView, setActiveView] = useState<"recorder" | "library">(
     "library",
-  ); // 'recorder' ou 'library'
-  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null); // Nouvelle état pour la vidéo sélectionnée
-  const [searchQuery, setSearchQuery] = useState<string>(""); // Nouvel état pour la chaîne de recherche
-  const [currentPage, setCurrentPage] = useState<number>(1); // Nouvel état pour la page actuelle
-  const [itemsPerPage] = useState<number>(10); // Nombre d'éléments par page
+  ); 
+  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1); 
+  const [itemsPerPage] = useState<number>(10); 
   const [showShareConfirmation, setShowShareConfirmation] =
     useState<boolean>(false);
   const [shareConfirmationMessage, setShareConfirmationMessage] =
     useState<string>("");
-
   const [isCameraOn, setIsCameraOn] = useState<boolean>(false);
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
-
   const refreshVideoList = async () => {
     const storedPath = await window.electronAPI.getStoredSaveFolderPath();
     if (storedPath) {
@@ -42,34 +38,28 @@ function App() {
       setVideos(newVideos);
     }
   };
-
-  // Filtrer les vidéos en fonction de la chaîne de recherche
+  
   const filteredVideos = videos.filter((video) =>
     video.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
-
-  // Calculer les vidéos pour la page actuelle
+  
   const indexOfLastVideo = currentPage * itemsPerPage;
   const indexOfFirstVideo = indexOfLastVideo - itemsPerPage;
   const paginatedVideos = filteredVideos.slice(
     indexOfFirstVideo,
     indexOfLastVideo,
   );
-
-  // Calculer le nombre total de pages
+  
   const totalPages = Math.ceil(filteredVideos.length / itemsPerPage);
-
-  // Fonctions pour changer de page
+  
   const goToNextPage = () => {
     setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
   };
-
   const goToPreviousPage = () => {
     setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
   };
-
   useEffect(() => {
-    // Écoute la réponse du processus principal après la sélection d'un fichier vidéo
+    
     const cleanupVideoFile = window.electronAPI.receive(
       "selected-video-file",
       (filePath: string) => {
@@ -87,12 +77,11 @@ function App() {
         }
       },
     );
-
-    // Écoute les messages de succès/erreur de sauvegarde depuis la modale
+    
     const cleanupSaveSuccess = window.electronAPI.onSaveRecordingSuccess(
       (filePath: string) => {
         alert(`Enregistrement sauvegardé avec succès: ${filePath}`);
-        refreshVideoList(); // Rafraîchir la liste après la sauvegarde
+        refreshVideoList(); 
       },
     );
     const cleanupSaveError = window.electronAPI.onSaveRecordingError(
@@ -102,18 +91,15 @@ function App() {
         );
       },
     );
-
-    // Au montage, demander la liste initiale des vidéos
+    
     refreshVideoList();
-
     return () => {
       cleanupVideoFile();
       cleanupSaveSuccess();
       cleanupSaveError();
     };
   }, []);
-
-  // Gérer le flux de la caméra et l'élément vidéo sur la page principale
+  
   useEffect(() => {
     if (isCameraOn && cameraStreamRef.current && cameraVideoRef.current) {
       cameraVideoRef.current.srcObject = cameraStreamRef.current;
@@ -124,17 +110,16 @@ function App() {
       cameraVideoRef.current.srcObject = null;
     }
   }, [isCameraOn, cameraStreamRef.current]);
-
   const handleToggleCamera = async () => {
     if (isCameraOn) {
-      // Arrêter la caméra
+      
       if (cameraStreamRef.current) {
         cameraStreamRef.current.getTracks().forEach((track) => track.stop());
         cameraStreamRef.current = null;
       }
       setIsCameraOn(false);
     } else {
-      // Démarrer la caméra
+      
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: true,
@@ -149,34 +134,17 @@ function App() {
       }
     }
   };
-
   const handleSelectVideo = (video: VideoItem) => {
     setSelectedVideo(video);
   };
-
   const handleCloseRecorderModal = () => {
     setShowScreenRecorderModal(false);
     if (isCameraOn) {
-      handleToggleCamera(); // Arrête la caméra si elle est active
+      handleToggleCamera(); 
     }
   };
-
   return (
     <div className="flex flex-col md:flex-row h-auto">
-      {/* Menu latéral gauche */}
-      <div className="w-full md:w-1/4 lg:w-1/5 bg-gray-800 text-white flex flex-col p-4">
-        <h2 className="text-xl font-bold mb-4">Menu</h2>
-        <button
-          onClick={() => setActiveView("library")}
-          className={`py-2 px-4 rounded mb-2 ${
-            activeView === "library" ? "bg-blue-700" : "bg-gray-700"
-          } hover:bg-blue-600`}
-        >
-          Ma Librairie
-        </button>
-      </div>
-
-      {/* Contenu principal */}
       <div className="flex-grow p-4 relative w-full md:w-3/4 lg:w-4/5">
         {activeView === "library" && (
           <VideoLibrary
@@ -191,7 +159,6 @@ function App() {
             goToPreviousPage={goToPreviousPage}
           />
         )}
-
         {isCameraOn && (
           <video
             ref={cameraVideoRef}
@@ -200,7 +167,6 @@ function App() {
             muted
           ></video>
         )}
-
         {selectedVideo && (
           <div className="mt-4">
             <h2 className="text-xl font-bold mb-2">{selectedVideo.title}</h2>
@@ -214,7 +180,6 @@ function App() {
           </div>
         )}
       </div>
-
       {showScreenRecorderModal && (
         <ScreenRecorderModal
           id={""}
@@ -224,7 +189,6 @@ function App() {
           handleToggleCamera={handleToggleCamera}
         />
       )}
-
       {showShareConfirmation && (
         <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
           {shareConfirmationMessage}
@@ -233,5 +197,4 @@ function App() {
     </div>
   );
 }
-
 export default App;

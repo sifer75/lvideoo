@@ -1,13 +1,11 @@
 import { useScreenRecorder } from "../../hooks/useScreenRecorder";
 import { HiOutlineMicrophone } from "react-icons/hi2";
 import { BsCameraVideoOff } from "react-icons/bs";
-import { SlScreenDesktop } from "react-icons/sl";
-
+import { CiFolderOn } from "react-icons/ci";
 import Button from "../Button";
 import MenuModal from "../MenuModal";
 import Selector from "../Selector";
 import ScreenSourceSelector from "../ScreenSourceSelector";
-
 interface ScreenRecorderModalProps {
   id: string;
   onClose: () => void;
@@ -15,7 +13,6 @@ interface ScreenRecorderModalProps {
   cameraStream: MediaStream | null;
   handleToggleCamera: () => Promise<void>;
 }
-
 function ScreenRecorderModal({
   id,
   onClose,
@@ -32,11 +29,10 @@ function ScreenRecorderModal({
     startRecording,
     stopRecording,
   } = useScreenRecorder({ isCameraOn, cameraStream });
-
   const handleChooseFolder = () => {
     window.electronAPI.send("open-folder-dialog", null);
   };
-console.log(setSelectedScreenSource, "coucuos")
+  console.log(setSelectedScreenSource, "coucuos");
   return (
     <div
       id={`ScreenRecorderModal__overlay__${id}`}
@@ -54,6 +50,17 @@ console.log(setSelectedScreenSource, "coucuos")
           screenSources={screenSources}
           selectedScreenSource={selectedScreenSource}
           setSelectedScreenSource={setSelectedScreenSource}
+        />
+        <Button
+          id={`ScreenRecorderModal__button__choose__${id}`}
+          color="gray"
+          onClick={handleChooseFolder}
+          text={
+            <div className="flex items-center space-x-2 pl-2">
+              <CiFolderOn color="black" size={20} />
+              <span className="font-semibold">{saveFolderPath}</span>
+            </div>
+          }
         />
         <Selector
           id={`ScreenRecorderModal__selector__${id}`}
@@ -94,5 +101,4 @@ console.log(setSelectedScreenSource, "coucuos")
     </div>
   );
 }
-
 export default ScreenRecorderModal;

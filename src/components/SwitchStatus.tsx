@@ -2,7 +2,6 @@ interface SwitchStatusProps {
   id: string;
   toggle: boolean;
 }
-
 function SwitchStatus({ id, toggle }: SwitchStatusProps) {
   return (
     <div
@@ -14,5 +13,4 @@ function SwitchStatus({ id, toggle }: SwitchStatusProps) {
     </div>
   );
 }
-
 export default SwitchStatus;

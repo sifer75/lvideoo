@@ -1,13 +1,12 @@
 import { ReactNode } from "react";
 interface ButtonProps {
   id: string;
-  text?: string;
-  onClick: () => void;
+  text?: string | ReactNode;
+  onClick?: () => void;
   color: string;
   disabled?: boolean;
   logo?: ReactNode;
 }
-
 function Button({ id, onClick, text, color, disabled, logo }: ButtonProps) {
   const bgclass =
     color === "white"
@@ -15,15 +14,14 @@ function Button({ id, onClick, text, color, disabled, logo }: ButtonProps) {
       : color === "black"
       ? "bg-black hover:bg-gray-900"
       : color === "blue"
-      ? "bg-blue-200 hover:bg-blue-500"
+      ? "bg-blue-500"
       : color === "green"
       ? "bg-green-200 hover:bg-green-500"
       : color === "red"
       ? "bg-red-500 hover:bg-red-700"
       : color === "gray"
-      ? "bg-gray-200 hover:bg-gray-500"
+      ? "bg-gray-500 hover:bg-gray-700"
       : "bg-orange-500 hover:bg-orange-700";
-
   return (
     <button
       id={id}
@@ -35,5 +33,4 @@ function Button({ id, onClick, text, color, disabled, logo }: ButtonProps) {
     </button>
   );
 }
-
 export default Button;

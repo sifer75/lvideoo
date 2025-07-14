@@ -15,33 +15,28 @@ declare global {
       getVideoThumbnail: (videoPath: string) => Promise<string | null>;
     };
   }
-
   interface VideoItem {
     id: string;
     title: string;
     path: string;
     shareLink: string;
   }
-
   interface ScreenSource {
     id: string;
     name: string;
     thumbnail: string;
     display_id: string;
   }
-
   interface ScreenRecorderModalProps {
     onClose: () => void;
     isCameraOn: boolean;
     cameraStream: MediaStream | null;
     handleToggleCamera: () => Promise<void>;
   }
-
   interface VideoLibraryProps {
     videos: VideoItem[];
     onOpenRecorder: () => void;
     onSelectVideo: (video: VideoItem) => void;
   }
 }
-
 export {};

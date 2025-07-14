@@ -1,12 +1,10 @@
 import { SlScreenDesktop } from "react-icons/sl";
-
 interface ScreenSourceSelectorProps {
   id: string;
   screenSources: { id: string; name: string }[];
   selectedScreenSource: string | null;
   setSelectedScreenSource: (sourceId: string) => void;
 }
-
 function ScreenSourceSelector({
   id,
   screenSources,
@@ -21,14 +19,14 @@ function ScreenSourceSelector({
     >
       <div
         className="absolute left-3
-      top-1/2 -translate-y-1/2 z-10"
+      top-1/2 -translate-y-1/2 z-10 pl-1"
       >
         <SlScreenDesktop color="black" size={20} />
       </div>
       <select
         id={`ScreenSourceSelector__${id}`}
         className="block w-full py-2
-      pl-10 pr-10 bg-transparent
+      pl-11 pr-10 bg-transparent
       appearance-none focus:outline-none
       rounded cursor-pointer"
         value={selectedScreenSource || ""}
@@ -43,5 +41,4 @@ function ScreenSourceSelector({
     </div>
   );
 }
-
 export default ScreenSourceSelector;
