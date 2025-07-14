@@ -116,7 +116,6 @@ function VideoLibrary({
       </div>
       <div className="flex space-x-2 mb-4">
         <Button id="VideoLibrary-button-open-recorder-modal" onClick={onOpenRecorder} color="blue" text="Ouvrir Enregistreur" />
-
       </div>
       
       <div className="flex-grow overflow-y-auto">

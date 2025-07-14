@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import ScreenRecorderModal from './components/screenRecorderModal/ScreenRecorderModal';
-import VideoLibrary from './components/VideoLibrary';
+import React, { useState, useEffect, useRef } from "react";
+import ScreenRecorderModal from "./components/screenRecorderModal/ScreenRecorderModal";
+import VideoLibrary from "./components/VideoLibrary";
 
 interface VideoItem {
   id: string;
@@ -11,14 +11,19 @@ interface VideoItem {
 
 function App() {
   const [videos, setVideos] = useState<VideoItem[]>([]);
-  const [showScreenRecorderModal, setShowScreenRecorderModal] = useState<boolean>(false);
-  const [activeView, setActiveView] = useState<'recorder' | 'library'>('library'); // 'recorder' ou 'library'
+  const [showScreenRecorderModal, setShowScreenRecorderModal] =
+    useState<boolean>(true);
+  const [activeView, setActiveView] = useState<"recorder" | "library">(
+    "library",
+  ); // 'recorder' ou 'library'
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null); // Nouvelle état pour la vidéo sélectionnée
-  const [searchQuery, setSearchQuery] = useState<string>(''); // Nouvel état pour la chaîne de recherche
+  const [searchQuery, setSearchQuery] = useState<string>(""); // Nouvel état pour la chaîne de recherche
   const [currentPage, setCurrentPage] = useState<number>(1); // Nouvel état pour la page actuelle
   const [itemsPerPage] = useState<number>(10); // Nombre d'éléments par page
-  const [showShareConfirmation, setShowShareConfirmation] = useState<boolean>(false);
-  const [shareConfirmationMessage, setShareConfirmationMessage] = useState<string>('');
+  const [showShareConfirmation, setShowShareConfirmation] =
+    useState<boolean>(false);
+  const [shareConfirmationMessage, setShareConfirmationMessage] =
+    useState<string>("");
 
   const [isCameraOn, setIsCameraOn] = useState<boolean>(false);
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -28,55 +33,75 @@ function App() {
     const storedPath = await window.electronAPI.getStoredSaveFolderPath();
     if (storedPath) {
       const videoUrls = await window.electronAPI.getVideosInFolder(storedPath);
-      const newVideos = videoUrls.map(url => ({
+      const newVideos = videoUrls.map((url) => ({
         id: url,
-        title: url.split(/[\\/]/).pop() || 'Vidéo',
+        title: url.split(/[\\/]/).pop() || "Vidéo",
         path: url,
-        shareLink: '',
+        shareLink: "",
       }));
       setVideos(newVideos);
     }
   };
 
   // Filtrer les vidéos en fonction de la chaîne de recherche
-  const filteredVideos = videos.filter(video =>
-    video.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredVideos = videos.filter((video) =>
+    video.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Calculer les vidéos pour la page actuelle
   const indexOfLastVideo = currentPage * itemsPerPage;
   const indexOfFirstVideo = indexOfLastVideo - itemsPerPage;
-  const paginatedVideos = filteredVideos.slice(indexOfFirstVideo, indexOfLastVideo);
+  const paginatedVideos = filteredVideos.slice(
+    indexOfFirstVideo,
+    indexOfLastVideo,
+  );
 
   // Calculer le nombre total de pages
   const totalPages = Math.ceil(filteredVideos.length / itemsPerPage);
 
   // Fonctions pour changer de page
   const goToNextPage = () => {
-    setCurrentPage(prevPage => Math.min(prevPage + 1, totalPages));
+    setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
   };
 
   const goToPreviousPage = () => {
-    setCurrentPage(prevPage => Math.max(prevPage - 1, 1));
+    setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
   };
 
   useEffect(() => {
     // Écoute la réponse du processus principal après la sélection d'un fichier vidéo
-    const cleanupVideoFile = window.electronAPI.receive('selected-video-file', (filePath: string) => {
-      if (filePath) {
-        const fileName = filePath.split(/[\\/]/).pop() || 'Nouvelle Vidéo';
-        setVideos(prevVideos => [...prevVideos, { id: Date.now().toString(), title: fileName, path: filePath, shareLink: '' }]);
-      }
-    });
+    const cleanupVideoFile = window.electronAPI.receive(
+      "selected-video-file",
+      (filePath: string) => {
+        if (filePath) {
+          const fileName = filePath.split(/[\\/]/).pop() || "Nouvelle Vidéo";
+          setVideos((prevVideos) => [
+            ...prevVideos,
+            {
+              id: Date.now().toString(),
+              title: fileName,
+              path: filePath,
+              shareLink: "",
+            },
+          ]);
+        }
+      },
+    );
 
     // Écoute les messages de succès/erreur de sauvegarde depuis la modale
-    const cleanupSaveSuccess = window.electronAPI.onSaveRecordingSuccess((filePath: string) => {
-      alert(`Enregistrement sauvegardé avec succès: ${filePath}`);
-      refreshVideoList(); // Rafraîchir la liste après la sauvegarde
-    });
-    const cleanupSaveError = window.electronAPI.onSaveRecordingError((errorMessage: string) => {
-      alert(`Erreur lors de la sauvegarde de l'enregistrement: ${errorMessage}`);
-    });
+    const cleanupSaveSuccess = window.electronAPI.onSaveRecordingSuccess(
+      (filePath: string) => {
+        alert(`Enregistrement sauvegardé avec succès: ${filePath}`);
+        refreshVideoList(); // Rafraîchir la liste après la sauvegarde
+      },
+    );
+    const cleanupSaveError = window.electronAPI.onSaveRecordingError(
+      (errorMessage: string) => {
+        alert(
+          `Erreur lors de la sauvegarde de l'enregistrement: ${errorMessage}`,
+        );
+      },
+    );
 
     // Au montage, demander la liste initiale des vidéos
     refreshVideoList();
@@ -92,7 +117,9 @@ function App() {
   useEffect(() => {
     if (isCameraOn && cameraStreamRef.current && cameraVideoRef.current) {
       cameraVideoRef.current.srcObject = cameraStreamRef.current;
-      cameraVideoRef.current.play().catch(e => console.error("Error playing camera stream:", e));
+      cameraVideoRef.current
+        .play()
+        .catch((e) => console.error("Error playing camera stream:", e));
     } else if (!isCameraOn && cameraVideoRef.current) {
       cameraVideoRef.current.srcObject = null;
     }
@@ -102,19 +129,23 @@ function App() {
     if (isCameraOn) {
       // Arrêter la caméra
       if (cameraStreamRef.current) {
-        cameraStreamRef.current.getTracks().forEach(track => track.stop());
+        cameraStreamRef.current.getTracks().forEach((track) => track.stop());
         cameraStreamRef.current = null;
       }
       setIsCameraOn(false);
     } else {
       // Démarrer la caméra
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
         cameraStreamRef.current = stream;
         setIsCameraOn(true);
       } catch (error) {
-        console.error('Erreur lors de l\'accès à la caméra:', error);
-        alert('Impossible d\'accéder à la caméra. Veuillez vérifier les permissions.');
+        console.error("Erreur lors de l'accès à la caméra:", error);
+        alert(
+          "Impossible d'accéder à la caméra. Veuillez vérifier les permissions.",
+        );
       }
     }
   };
@@ -136,8 +167,10 @@ function App() {
       <div className="w-full md:w-1/4 lg:w-1/5 bg-gray-800 text-white flex flex-col p-4">
         <h2 className="text-xl font-bold mb-4">Menu</h2>
         <button
-          onClick={() => setActiveView('library')}
-          className={`py-2 px-4 rounded mb-2 ${activeView === 'library' ? 'bg-blue-700' : 'bg-gray-700'} hover:bg-blue-600`}
+          onClick={() => setActiveView("library")}
+          className={`py-2 px-4 rounded mb-2 ${
+            activeView === "library" ? "bg-blue-700" : "bg-gray-700"
+          } hover:bg-blue-600`}
         >
           Ma Librairie
         </button>
@@ -145,7 +178,7 @@ function App() {
 
       {/* Contenu principal */}
       <div className="flex-grow p-4 relative w-full md:w-3/4 lg:w-4/5">
-        {activeView === 'library' && (
+        {activeView === "library" && (
           <VideoLibrary
             videos={paginatedVideos}
             onOpenRecorder={() => setShowScreenRecorderModal(true)}
@@ -158,7 +191,7 @@ function App() {
             goToPreviousPage={goToPreviousPage}
           />
         )}
-        
+
         {isCameraOn && (
           <video
             ref={cameraVideoRef}
@@ -171,13 +204,20 @@ function App() {
         {selectedVideo && (
           <div className="mt-4">
             <h2 className="text-xl font-bold mb-2">{selectedVideo.title}</h2>
-            <video controls autoPlay key={selectedVideo.id} src={selectedVideo.path} className="w-full h-auto"></video>
+            <video
+              controls
+              autoPlay
+              key={selectedVideo.id}
+              src={selectedVideo.path}
+              className="w-full h-auto"
+            ></video>
           </div>
         )}
       </div>
 
       {showScreenRecorderModal && (
         <ScreenRecorderModal
+          id={""}
           onClose={handleCloseRecorderModal}
           isCameraOn={isCameraOn}
           cameraStream={cameraStreamRef.current}
