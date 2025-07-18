@@ -188,28 +188,27 @@ const createWindow = () => {
     }
   });
   ipcMain.handle("get-video-thumbnail", async (event, videoPath: string) => {
+    
     try {
       const url = new URL(videoPath);
       if (url.protocol !== "file:") {
         throw new Error("Invalid protocol for thumbnail generation");
       }
-      const videoFileName = path.basename(url.pathname);
-      const storedPath = store.get(
-        "saveFolderPath",
-        app.getPath("videos"),
-      );
-      const actualVideoPath = path.join(storedPath, videoFileName);
+      const actualVideoPath = url.pathname;
+
       const tempDir = app.getPath("temp");
       const thumbnailFileName = `${path.basename(
-        videoFileName,
-        path.extname(videoFileName),
+        actualVideoPath,
+        path.extname(actualVideoPath),
       )}.png`;
       const thumbnailPath = path.join(tempDir, thumbnailFileName);
+      
       
       if (fs.existsSync(thumbnailPath)) {
         const data = await fs.promises.readFile(thumbnailPath);
         return `data:image/png;base64,${data.toString("base64")}`;
       }
+      
       return new Promise((resolve, reject) => {
         ffmpeg(actualVideoPath)
           .on("end", async () => {
@@ -220,17 +219,12 @@ const createWindow = () => {
               resolve(`data:image/png;base64,${data.toString("base64")}`);
             } catch (err) {
               console.error(
-                `Error accessing thumbnail file after generation:`,
-                err,
+                `[get-video-thumbnail] Error accessing thumbnail file after generation:`, err,
               );
               reject(err);
             }
           })
           .on("error", (err, stdout, stderr) => {
-            console.error("Error generating thumbnail for " + actualVideoPath);
-            console.error("ffmpeg error:", err.message);
-            console.error("ffmpeg stdout:", stdout);
-            console.error("ffmpeg stderr:", stderr);
             reject(err);
           })
           .screenshots({
@@ -241,18 +235,14 @@ const createWindow = () => {
           });
       });
     } catch (error) {
-      console.error("Error processing video path for thumbnail:", error);
       return null; 
     }
   });
   ipcMain.handle('request-camera-permission', async () => {
-    console.log('IPC: Received request-camera-permission');
     try {
       const isAllowed = await systemPreferences.askForMediaAccess('camera');
-      console.log(`IPC: Camera permission status from OS: ${isAllowed}`);
       return isAllowed;
     } catch (error) {
-      console.error('IPC: Error requesting camera permission:', error);
       return false;
     }
   });
