@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ScreenRecorderModal from "./components/screenRecorderModal/ScreenRecorderModal";
-import VideoLibrary from "./components/VideoLibrary";
+import VideoLibrary from "./components/VideoLibrary/VideoLibrary";
 interface VideoItem {
   id: string;
   title: string;
@@ -17,7 +17,7 @@ function App() {
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage] = useState<number>(10);
+  const [itemsPerPage] = useState<number>(9);
   const refreshVideoList = async () => {
     const storedPath = await window.electronAPI.getStoredSaveFolderPath();
     if (storedPath) {
@@ -146,7 +146,7 @@ function App() {
       </div>
       {showScreenRecorderModal && (
         <ScreenRecorderModal
-          id={``}
+          id={`ScreenRecorderModal`}
           onClose={handleCloseRecorderModal}
         />
       )}

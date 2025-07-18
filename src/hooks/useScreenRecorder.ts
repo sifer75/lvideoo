@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { createVideoConstraints } from "../components/screenRecorderModal/ScreenRecorderModal.utils";
 interface UseScreenRecorderProps {
   isMicrophoneOn: boolean;
+  isCameraOn: boolean;
 }
 interface ScreenSource {
   id: string;
@@ -9,6 +9,7 @@ interface ScreenSource {
 }
 export function useScreenRecorder({
   isMicrophoneOn,
+  isCameraOn,
 }: UseScreenRecorderProps) {
   const [recordingStatus, setRecordingStatus] = useState<string>("Prêt");
   const [saveFolderPath, setSaveFolderPath] =
@@ -60,81 +61,79 @@ export function useScreenRecorder({
     };
   }, []);
 
-  const startRecording = useCallback(async (cameraStream: MediaStream | null) => {
-    console.log(
-      "startRecording called. cameraStream:",
-      cameraStream,
-    );
-    if (!selectedScreenSource) {
-      alert("Veuillez sélectionner une source d'écran.");
-      return;
-    }
-    if (saveFolderPath === "Non sélectionné") {
-      alert("Veuillez sélectionner un dossier de sauvegarde.");
-      return;
-    }
-
-    setRecordingStatus("Enregistrement");
-    recordedChunksRef.current = [];
-    try {
-      const screenStream = await navigator.mediaDevices.getUserMedia({
-        video: createVideoConstraints(selectedScreenSource),
-      });
-      const tracks = [...screenStream.getVideoTracks()];
-
-      if (isMicrophoneOn) {
-        const audioStream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        tracks.push(...audioStream.getAudioTracks());
+  const startRecording = useCallback(
+    async (cameraStream: MediaStream | null) => {
+      console.log("startRecording called. cameraStream:", cameraStream);
+      if (!selectedScreenSource) {
+        alert("Veuillez sélectionner une source d'écran.");
+        return;
+      }
+      if (saveFolderPath === "Non sélectionné") {
+        alert("Veuillez sélectionner un dossier de sauvegarde.");
+        return;
       }
 
-      if (cameraStream) {
-        cameraStreamForRecordingRef.current = cameraStream;
-        tracks.push(...cameraStream.getVideoTracks());
-      }
+      setRecordingStatus("Enregistrement");
+      recordedChunksRef.current = [];
+      try {
+        const tracks = [];
 
-      const combinedStream = new MediaStream(tracks);
-      streamRef.current = combinedStream;
-      const recorder = new MediaRecorder(combinedStream, {
-        mimeType: "video/webm; codecs=vp9",
-      });
-      mediaRecorderRef.current = recorder;
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          recordedChunksRef.current.push(event.data);
+        if (isMicrophoneOn) {
+          const audioStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          tracks.push(...audioStream.getAudioTracks());
         }
-      };
-      recorder.onstop = async () => {
-        const blob = new Blob(recordedChunksRef.current, {
-          type: "video/webm",
-        });
-        window.electronAPI.send("save-recording", {
-          blob: await blob.arrayBuffer(),
-          folderPath: saveFolderPath,
-          format: "mp4",
-        });
 
+        if (isCameraOn) {
+          const videoStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+          tracks.push(...videoStream.getVideoTracks());
+        }
+
+        const combinedStream = new MediaStream(tracks);
+        streamRef.current = combinedStream;
+        const recorder = new MediaRecorder(combinedStream, {
+          mimeType: "video/webm; codecs=vp9",
+        });
+        mediaRecorderRef.current = recorder;
+        recorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunksRef.current.push(event.data);
+          }
+        };
+        recorder.onstop = async () => {
+          const blob = new Blob(recordedChunksRef.current, {
+            type: "video/webm",
+          });
+          window.electronAPI.send("save-recording", {
+            blob: await blob.arrayBuffer(),
+            folderPath: saveFolderPath,
+            format: "mp4",
+          });
+
+          if (isMounted.current) {
+            setRecordingStatus("Prêt");
+          }
+        };
+        recorder.start();
+      } catch (error) {
+        console.error(
+          "Erreur détaillée lors du démarrage de l'enregistrement:",
+          error,
+        );
+        if (error instanceof Error) {
+          console.error(`Error name: ${error.name}`);
+          console.error(`Error message: ${error.message}`);
+        }
         if (isMounted.current) {
-          setRecordingStatus("Prêt");
+          setRecordingStatus("Erreur");
         }
-      };
-      recorder.start();
-    } catch (error) {
-      console.error("Erreur détaillée lors du démarrage de l'enregistrement:", error);
-      if (error instanceof Error) {
-        console.error(`Error name: ${error.name}`);
-        console.error(`Error message: ${error.message}`);
       }
-      if (isMounted.current) {
-        setRecordingStatus("Erreur");
-      }
-    }
-  }, [
-    selectedScreenSource,
-    saveFolderPath,
-    isMicrophoneOn,
-  ]);
+    },
+    [selectedScreenSource, saveFolderPath, isMicrophoneOn],
+  );
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current?.state === "recording") {

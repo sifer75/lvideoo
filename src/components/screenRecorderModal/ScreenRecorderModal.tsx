@@ -25,7 +25,7 @@ function ScreenRecorderModal({ id, onClose }: ScreenRecorderModalProps) {
     recordingStatus,
     startRecording,
     stopRecording,
-  } = useScreenRecorder({ isMicrophoneOn });
+  } = useScreenRecorder({ isMicrophoneOn, isCameraOn });
 
   const handleChooseFolder = () => {
     window.electronAPI.send("open-folder-dialog", null);
