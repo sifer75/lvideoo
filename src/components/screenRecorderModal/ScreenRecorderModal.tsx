@@ -16,6 +16,7 @@ interface ScreenRecorderModalProps {
 function ScreenRecorderModal({ id, onClose }: ScreenRecorderModalProps) {
   const [isMicrophoneOn, setIsMicrophoneOn] = useState<boolean>(true);
   const [isCameraOn, setIsCameraOn] = useState<boolean>(false);
+  const [showCameraPreviewModal, setShowCameraPreviewModal] = useState<boolean>(false);
 
   const {
     screenSources,
@@ -36,6 +37,7 @@ function ScreenRecorderModal({ id, onClose }: ScreenRecorderModalProps) {
   };
 
   const cameraStreamRef = useRef<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const handleToggleCamera = async () => {
     if (isCameraOn) {
@@ -45,28 +47,40 @@ function ScreenRecorderModal({ id, onClose }: ScreenRecorderModalProps) {
         cameraStreamRef.current = null;
       }
       setIsCameraOn(false);
+      setShowCameraPreviewModal(false);
     } else {
       // Turn on camera
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         cameraStreamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
         setIsCameraOn(true);
+        setShowCameraPreviewModal(true);
       } catch (error) {
         console.error("Error accessing camera:", error);
         alert("Impossible d'accéder à la caméra. Veuillez vérifier vos permissions.");
         setIsCameraOn(false);
+        setShowCameraPreviewModal(false);
       }
     }
   };
 
+  const handleCloseCameraPreview = () => {
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    }
+    setIsCameraOn(false);
+    setShowCameraPreviewModal(false);
+  };
+
   useEffect(() => {
-    return () => {
-      // Cleanup camera stream on unmount
-      if (cameraStreamRef.current) {
-        cameraStreamRef.current.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, []);
+    if (showCameraPreviewModal && videoRef.current && cameraStreamRef.current) {
+      videoRef.current.srcObject = cameraStreamRef.current;
+    }
+  }, [showCameraPreviewModal, cameraStreamRef.current]);
 
   return (
     <div
@@ -138,6 +152,20 @@ function ScreenRecorderModal({ id, onClose }: ScreenRecorderModalProps) {
         <p className="mt-4 text-gray-700">
           Status: <span className="font-semibold">{recordingStatus}</span>
         </p>
+
+        {showCameraPreviewModal && (
+          <div
+            className="fixed left-2 bottom-2 h-fit bg-opacity-50 flex justify-center items-left z-50"
+            onClick={handleCloseCameraPreview}
+          >
+            <div
+              className="bg-white p-4 rounded-lg shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <video ref={videoRef} autoPlay playsInline className="w-72 h-auto rounded-md"></video>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
