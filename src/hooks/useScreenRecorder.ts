@@ -7,10 +7,7 @@ interface ScreenSource {
   id: string;
   name: string;
 }
-export function useScreenRecorder({
-  isMicrophoneOn,
-  isCameraOn,
-}: UseScreenRecorderProps) {
+export function useScreenRecorder({ isMicrophoneOn, isCameraOn }: UseScreenRecorderProps) {
   const [recordingStatus, setRecordingStatus] = useState<string>("Prêt");
   const [saveFolderPath, setSaveFolderPath] =
     useState<string>("Non sélectionné");
@@ -22,29 +19,22 @@ export function useScreenRecorder({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
-  const cameraStreamForRecordingRef = useRef<MediaStream | null>(null); // Nouvelle ref pour le stream de la caméra d'enregistrement
-
-  const isMounted = useRef(true);
+  
 
   useEffect(() => {
-    isMounted.current = true;
     const cleanupFolderListener = window.electronAPI.receive(
       "selected-folder",
       (folderPath: string) => {
-        if (isMounted.current) {
-          setSaveFolderPath(folderPath);
-        }
+        setSaveFolderPath(folderPath);
       },
     );
     async function fetchScreenSources() {
       try {
         const sources = await window.electronAPI.getScreenSources();
 
-        if (isMounted.current) {
-          setScreenSources(sources);
-          if (sources.length > 0) {
-            setSelectedScreenSource(sources[0].id);
-          }
+        setScreenSources(sources);
+        if (sources.length > 0) {
+          setSelectedScreenSource(sources[0].id);
         }
       } catch (error) {
         console.error(
@@ -56,7 +46,6 @@ export function useScreenRecorder({
     fetchScreenSources();
 
     return () => {
-      isMounted.current = false;
       cleanupFolderListener();
     };
   }, []);
@@ -76,7 +65,17 @@ export function useScreenRecorder({
       setRecordingStatus("Enregistrement");
       recordedChunksRef.current = [];
       try {
-        const tracks = [];
+        const screenStream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            mandatory: {
+              chromeMediaSource: "desktop",
+              chromeMediaSourceId: selectedScreenSource,
+            },
+          } as any,
+        });
+
+        const tracks = [...screenStream.getVideoTracks()];
 
         if (isMicrophoneOn) {
           const audioStream = await navigator.mediaDevices.getUserMedia({
@@ -113,9 +112,7 @@ export function useScreenRecorder({
             format: "mp4",
           });
 
-          if (isMounted.current) {
-            setRecordingStatus("Prêt");
-          }
+          setRecordingStatus("Prêt");
         };
         recorder.start();
       } catch (error) {
@@ -127,9 +124,7 @@ export function useScreenRecorder({
           console.error(`Error name: ${error.name}`);
           console.error(`Error message: ${error.message}`);
         }
-        if (isMounted.current) {
-          setRecordingStatus("Erreur");
-        }
+        setRecordingStatus("Erreur");
       }
     },
     [selectedScreenSource, saveFolderPath, isMicrophoneOn],
@@ -140,13 +135,8 @@ export function useScreenRecorder({
       mediaRecorderRef.current.stop();
     }
     streamRef.current?.getTracks().forEach((track) => track.stop());
-    cameraStreamForRecordingRef.current
-      ?.getTracks()
-      .forEach((track) => track.stop());
 
-    if (isMounted.current) {
-      setRecordingStatus("Arrêté");
-    }
+    setRecordingStatus("Arrêté");
   }, []);
 
   return {

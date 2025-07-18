@@ -5,44 +5,7 @@ import ffmpeg from "fluent-ffmpeg";
 import express from "express";
 import { spawn, ChildProcess } from "child_process";
 import started from "electron-squirrel-startup";
-let videoServer: any = null;
-let videoServerPort: number | null = null;
-let publicUrl: string | null = null;
-let ngrokProcess: ChildProcess | null = null;
-const startVideoServer = async (folderPath: string) => {
-  if (videoServer) {
-    videoServer.close();
-    if (ngrokProcess) {
-      ngrokProcess.kill();
-      ngrokProcess = null;
-    }
-  }
-  const app = express();
-  app.use(express.static(folderPath));
-  videoServer = app.listen(0, async () => {
-    videoServerPort = videoServer.address().port;
-    console.log(`Video server listening on port: ${videoServerPort}`);
-    const ngrokBinPath = "/opt/homebrew/bin/ngrok"; 
-    
-    ngrokProcess = spawn(ngrokBinPath, ["http", String(videoServerPort)], {
-      shell: true,
-    });
-    
-    await new Promise((resolve) => setTimeout(resolve, 2000)); 
-    try {
-      const response = await fetch("http://localhost:4040/api/tunnels");//localhost:4040/api/tunnels");
-      const data = await response.json();
-      if (data.tunnels && data.tunnels.length > 0) {
-        publicUrl = data.tunnels[0].public_url;
-        console.log(`ngrok tunnel created at: ${publicUrl}`);
-      } else {
-        console.warn("No ngrok tunnels found via API.");
-      }
-    } catch (error) {
-      console.error("Error fetching ngrok tunnel info:", error);
-    }
-  });
-};
+
 if (started) {
   app.quit();
 }
@@ -87,6 +50,7 @@ const createWindow = () => {
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
+      webSecurity: false,
     },
   });
   
@@ -107,7 +71,7 @@ const createWindow = () => {
     if (!canceled && filePaths.length > 0) {
       const selectedPath = filePaths[0];
       store.set("saveFolderPath", selectedPath); 
-      startVideoServer(selectedPath); 
+       
       event.sender.send("selected-folder", selectedPath);
     } else {
       event.sender.send("selected-folder", ""); 
@@ -131,19 +95,41 @@ const createWindow = () => {
     try {
       const buffer = Buffer.from(blob);
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const fileName = `recording_${timestamp}.webm`;
-      const filePath = path.join(folderPath, fileName);
-      fs.writeFile(filePath, buffer, (err) => {
+      const webmFileName = `recording_${timestamp}.webm`;
+      const mp4FileName = `recording_${timestamp}.mp4`;
+      const webmFilePath = path.join(folderPath, webmFileName);
+      const mp4FilePath = path.join(folderPath, mp4FileName);
+
+      fs.writeFile(webmFilePath, buffer, (err) => {
         if (err) {
-          console.error("Failed to save recording:", err);
-          event.sender.send("save-recording-error", err.message); 
-        } else {
-          event.sender.send("save-recording-success", filePath); 
+          console.error("Failed to save webm recording:", err);
+          event.sender.send("save-recording-error", err.message);
+          return;
         }
+
+        ffmpeg(webmFilePath)
+          .setFfmpegPath(getFfmpegPath())
+          .videoCodec('libx264')
+          .audioCodec('aac')
+          .toFormat('mp4')
+          .on('end', () => {
+            console.log('Conversion to MP4 finished.');
+            fs.unlink(webmFilePath, (unlinkErr) => {
+              if (unlinkErr) {
+                console.error("Failed to delete webm file:", unlinkErr);
+              }
+            });
+            event.sender.send("save-recording-success", mp4FilePath);
+          })
+          .on('error', (convertErr) => {
+            console.error('Error converting to MP4:', convertErr);
+            event.sender.send("save-recording-error", convertErr.message);
+          })
+          .save(mp4FilePath);
       });
     } catch (error) {
       console.error("Error processing recording data:", error);
-      event.sender.send("save-recording-error", error.message); 
+      event.sender.send("save-recording-error", error.message);
     }
   });
   
@@ -176,10 +162,7 @@ const createWindow = () => {
             return videoExtensions.includes(ext);
           })
           .map((file) => path.join(targetPath, file));
-        return videoFiles.map(
-          (filePath) =>
-            `http://localhost:${videoServerPort}/${path.basename(filePath)}`,
-        );
+        return videoFiles.map((filePath) => `file://${filePath}`);
       } catch (error) {
         console.error("Error reading video folder:", error);
         return [];
@@ -207,7 +190,7 @@ const createWindow = () => {
   ipcMain.handle("get-video-thumbnail", async (event, videoPath: string) => {
     try {
       const url = new URL(videoPath);
-      if (url.protocol !== "http:") {
+      if (url.protocol !== "file:") {
         throw new Error("Invalid protocol for thumbnail generation");
       }
       const videoFileName = path.basename(url.pathname);
@@ -274,22 +257,14 @@ const createWindow = () => {
     }
   });
 
-  ipcMain.handle("get-public-url", () => {
-    return publicUrl;
-  });
+  
 };
 app.on("ready", async () => {
-  const storedPath = store.get("saveFolderPath", app.getPath("videos"));
-  await startVideoServer(storedPath);
   createWindow();
 });
 app.on("window-all-closed", async () => {
   if (process.platform !== "darwin") {
     app.quit();
-  }
-  if (ngrokProcess) {
-    ngrokProcess.kill();
-    ngrokProcess = null;
   }
 });
 app.on("activate", () => {
