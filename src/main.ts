@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, desktopCapturer } from "electron";
+import { app, session, BrowserWindow, ipcMain, dialog, desktopCapturer, systemPreferences } from "electron";
 import path from "node:path";
 import fs from "node:fs";
 import ffmpeg from "fluent-ffmpeg";
@@ -30,7 +30,7 @@ const startVideoServer = async (folderPath: string) => {
     
     await new Promise((resolve) => setTimeout(resolve, 2000)); 
     try {
-      const response = await fetch("http:
+      const response = await fetch("http://localhost:4040/api/tunnels");//localhost:4040/api/tunnels");
       const data = await response.json();
       if (data.tunnels && data.tunnels.length > 0) {
         publicUrl = data.tunnels[0].public_url;
@@ -178,7 +178,7 @@ const createWindow = () => {
           .map((file) => path.join(targetPath, file));
         return videoFiles.map(
           (filePath) =>
-            `http:
+            `http://localhost:${videoServerPort}/${path.basename(filePath)}`,
         );
       } catch (error) {
         console.error("Error reading video folder:", error);
@@ -262,6 +262,18 @@ const createWindow = () => {
       return null; 
     }
   });
+  ipcMain.handle('request-camera-permission', async () => {
+    console.log('IPC: Received request-camera-permission');
+    try {
+      const isAllowed = await systemPreferences.askForMediaAccess('camera');
+      console.log(`IPC: Camera permission status from OS: ${isAllowed}`);
+      return isAllowed;
+    } catch (error) {
+      console.error('IPC: Error requesting camera permission:', error);
+      return false;
+    }
+  });
+
   ipcMain.handle("get-public-url", () => {
     return publicUrl;
   });

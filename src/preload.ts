@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on(channel, subscription);
     return () => ipcRenderer.removeListener(channel, subscription);
   },
+  invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
   getScreenSources: () => ipcRenderer.invoke('get-screen-sources'),
   saveRecording: (data: { blob: ArrayBuffer, folderPath: string }) => ipcRenderer.send('save-recording', data),
   onSaveRecordingSuccess: (func: (filePath: string) => void) => {

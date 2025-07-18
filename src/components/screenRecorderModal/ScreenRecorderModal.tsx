@@ -1,25 +1,22 @@
 import { useScreenRecorder } from "../../hooks/useScreenRecorder";
 import { HiOutlineMicrophone } from "react-icons/hi2";
-import { BsCameraVideoOff } from "react-icons/bs";
+import { BsCameraVideoOff, BsCameraVideoFill } from "react-icons/bs";
 import { CiFolderOn } from "react-icons/ci";
 import Button from "../Button";
 import MenuModal from "../MenuModal";
-import Selector from "../Selector";
 import ScreenSourceSelector from "../ScreenSourceSelector";
+import LabeledControl from "../LabeledControl"; // Import the new LabeledControl component
+import { useState, useRef, useEffect } from "react";
+
 interface ScreenRecorderModalProps {
   id: string;
   onClose: () => void;
-  isCameraOn: boolean;
-  cameraStream: MediaStream | null;
-  handleToggleCamera: () => Promise<void>;
 }
-function ScreenRecorderModal({
-  id,
-  onClose,
-  isCameraOn,
-  cameraStream,
-  handleToggleCamera,
-}: ScreenRecorderModalProps) {
+
+function ScreenRecorderModal({ id, onClose }: ScreenRecorderModalProps) {
+  const [isMicrophoneOn, setIsMicrophoneOn] = useState<boolean>(true);
+  const [isCameraOn, setIsCameraOn] = useState<boolean>(false);
+
   const {
     screenSources,
     selectedScreenSource,
@@ -28,11 +25,49 @@ function ScreenRecorderModal({
     recordingStatus,
     startRecording,
     stopRecording,
-  } = useScreenRecorder({ isCameraOn, cameraStream });
+  } = useScreenRecorder({ isMicrophoneOn });
+
   const handleChooseFolder = () => {
     window.electronAPI.send("open-folder-dialog", null);
   };
-  console.log(setSelectedScreenSource, "coucuos");
+
+  const handleToggleMicrophone = () => {
+    setIsMicrophoneOn((prev) => !prev);
+  };
+
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+
+  const handleToggleCamera = async () => {
+    if (isCameraOn) {
+      // Turn off camera
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+        cameraStreamRef.current = null;
+      }
+      setIsCameraOn(false);
+    } else {
+      // Turn on camera
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        cameraStreamRef.current = stream;
+        setIsCameraOn(true);
+      } catch (error) {
+        console.error("Error accessing camera:", error);
+        alert("Impossible d'accéder à la caméra. Veuillez vérifier vos permissions.");
+        setIsCameraOn(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      // Cleanup camera stream on unmount
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
   return (
     <div
       id={`ScreenRecorderModal__overlay__${id}`}
@@ -62,27 +97,33 @@ function ScreenRecorderModal({
             </div>
           }
         />
-        <Selector
-          id={`ScreenRecorderModal__selector__${id}`}
-          color="gray"
-          text="micro"
-          logo={<HiOutlineMicrophone color="black" size={20} />}
-          status={isCameraOn}
-          visible={true}
-          onClick={handleToggleCamera}
+        <LabeledControl
+          id={`ScreenRecorderModal__microphone__${id}`}
+          label="micro"
+          icon={<HiOutlineMicrophone color="black" size={20} />}
+          status={isMicrophoneOn}
+          onClick={handleToggleMicrophone}
         />
-        <Selector
-          id={`ScreenRecorderModal__selector__${id}`}
-          color="gray"
-          text="vidéo"
-          logo={<BsCameraVideoOff color="black" size={20} />}
+        <LabeledControl
+          id={`ScreenRecorderModal__camera__${id}`}
+          label="vidéo"
+          icon={
+            isCameraOn ? (
+              <BsCameraVideoFill color="black" size={20} />
+            ) : (
+              <BsCameraVideoOff color="black" size={20} />
+            )
+          }
           status={isCameraOn}
-          visible={true}
           onClick={handleToggleCamera}
         />
         <Button
           id={`ScreenRecorderModal__button__record__${id}`}
-          onClick={startRecording}
+          onClick={() => {
+            console.log("Before startRecording - isCameraOn:", isCameraOn);
+            console.log("Before startRecording - cameraStreamRef.current:", cameraStreamRef.current);
+            startRecording(isCameraOn ? cameraStreamRef.current : null);
+          }}
           disabled={recordingStatus === "Enregistrement"}
           color={"orange"}
           text="Enregistrement"
@@ -101,4 +142,5 @@ function ScreenRecorderModal({
     </div>
   );
 }
+
 export default ScreenRecorderModal;
